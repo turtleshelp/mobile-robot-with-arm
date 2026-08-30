@@ -2,12 +2,19 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>mobile_robot_description</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="ali@todo.todo">ali</maintainer>
-  <license>TODO: License declaration</license>
+  <version>0.1.0</version>
+  <description>ROS 2 description, Gazebo simulation, and control integration for the mobile robot with 4-DOF manipulator.</description>
+  <maintainer email="turtleshelp@users.noreply.github.com">Muhammad Ali Sadiq</maintainer>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>turtlebot3_manipulation_description</exec_depend>
+  <exec_depend>turtlebot3_manipulation_bringup</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

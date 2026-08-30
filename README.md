@@ -205,12 +205,61 @@ Important topics and interfaces currently include:
 /arm_controller/joint_trajectory
 /gripper_controller/gripper_cmd
 ```
+## Phase 3 — MoveIt 2 Integration
+
+Phase 3 adds MoveIt 2 motion planning and execution for the integrated
+4-DOF manipulator and gripper.
+
+The project now contains its own MoveIt configuration package:
+
+```text
+src/mobile_robot_moveit_config/
+
+MoveIt uses the integrated robot model from:
+
+```text
+src/mobile_robot_description/urdf/mobile_base.urdf.xacro
+```
+
+### Launch
+
+Gazebo:
+
+```bash
+ros2 launch mobile_robot_description gazebo.launch.py
+```
+
+MoveGroup:
+
+```bash
+ros2 launch mobile_robot_moveit_config move_group.launch.py
+```
+
+MoveIt RViz:
+
+```bash
+ros2 launch mobile_robot_moveit_config moveit_rviz.launch.py
+```
+
+### Verified Functionality
+
+- MoveIt 2 arm planning with OMPL
+- Named `home` arm target
+- Plan + Execute through `arm_controller`
+- Gripper `open` and `close`
+- Stable arm motion in Gazebo
+- Differential-drive operation with the arm attached
+
+The external ROBOTIS TurtleBot3 Manipulation repository is used only as an
+upstream dependency for selected TurtleBot3 and OpenMANIPULATOR-X reference
+assets and remains unmodified.
 
 ## Status
 
-**Current milestone:** Mobile base + OpenMANIPULATOR-X simulation and low-level control operational.
+**Current milestone:** Mobile base + 4-DOF manipulator + MoveIt 2 integration operational.
 
-The next major development stage is **MoveIt 2 motion planning and manipulation**.
+The robot currently supports differential-drive motion, arm trajectory control,
+MoveIt 2 motion planning and execution, and gripper open/close execution in Gazebo.
 
 ## Author
 

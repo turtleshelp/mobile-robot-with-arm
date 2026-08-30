@@ -2,6 +2,19 @@
 <sdf version="1.6">
   <world name="default">
 
+    <!-- Stable ODE physics for mobile manipulator -->
+    <physics name="stable_physics" type="ode">
+      <max_step_size>0.0005</max_step_size>
+      <real_time_update_rate>1000</real_time_update_rate>
+
+      <ode>
+        <solver>
+          <type>quick</type>
+          <iters>100</iters>
+        </solver>
+      </ode>
+    </physics>
+
     <scene>
       <!-- Brighter overall illumination -->
       <ambient>0.8 0.8 0.8 1</ambient>
