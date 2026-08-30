@@ -1,0 +1,22 @@
+# ROS 2 / colcon generated directories
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE / editor
+.vscode/
+.idea/
+*~
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# External ROBOTIS dependency
+src/turtlebot3_manipulation/
