@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+
+    <scene>
+      <!-- Brighter overall illumination -->
+      <ambient>0.8 0.8 0.8 1</ambient>
+
+      <!-- Light neutral background -->
+      <background>0.85 0.85 0.85 1</background>
+
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- Strong directional light -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+
+      <pose>0 0 10 0 0 0</pose>
+
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+  </world>
+</sdf>

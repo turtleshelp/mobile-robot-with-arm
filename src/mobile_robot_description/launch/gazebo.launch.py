@@ -19,6 +19,12 @@ def generate_launch_description():
         'mobile_base.urdf.xacro'
     )
 
+    world_file = os.path.join(
+        pkg_mobile_robot,
+        'worlds',
+        'mobile_robot.world'
+    )
+
     robot_description = ParameterValue(
         Command(['xacro ', xacro_file]),
         value_type=str
@@ -34,6 +40,7 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
+	    'world': world_file,
             'extra_gazebo_args': '-u'
         }.items()
     )

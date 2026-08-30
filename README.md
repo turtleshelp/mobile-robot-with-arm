@@ -4,6 +4,12 @@ A ROS 2 mobile manipulation project combining a **TurtleBot3 Waffle Pi mobile ba
 
 The project is being developed and tested in simulation using **ROS 2 Humble** and **Gazebo Classic** on Ubuntu 22.04.
 
+## Gazebo Simulation
+
+![Mobile Robot with OpenMANIPULATOR-X](docs/images/mobile_robot_gazebo.png)
+
+*TurtleBot3 Waffle Pi mobile base integrated with an OpenMANIPULATOR-X arm and gripper in Gazebo Classic.*
+
 ## Project Overview
 
 The objective is to develop a mobile manipulator capable of combining:
