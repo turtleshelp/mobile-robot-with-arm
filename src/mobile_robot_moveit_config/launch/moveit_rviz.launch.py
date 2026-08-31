@@ -102,6 +102,7 @@ def generate_launch_description():
             robot_description_semantic,
             ompl_planning_pipeline_config,
             kinematics_yaml,
+	    {'use_sim_time': True},
         ]
     )
 
