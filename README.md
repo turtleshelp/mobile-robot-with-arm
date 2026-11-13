@@ -22,7 +22,7 @@ Developed as a case study in the M.Eng. Mechatronics programme at TH Deggendorf.
 | Localization (AMCL) + Nav2 navigation on a saved map | ✅ |
 | Precise parking at a pedestal (Nav2 staging + LiDAR docking) | ✅ |
 | One-command bringup (Gazebo → AMCL → Nav2 → MoveIt) | ✅ |
-| Scripted mission: drive → dock → pick → drive → dock → place | ⚠️ The **pick and place are not real yet**: the arm moves through fixed joint poses and the gripper closes on nothing |
+| Autonomous mission: drive → dock → **pick cube** → drive → dock → **place cube** | ✅ The cube is really moved from one pedestal to the other. The arm targets come from the docking measurement and are solved with analytic IK. Holding the cube in Gazebo relies on a **grasp assist plugin** (see below) |
 | Camera / RGB-D sensing | ❌ Camera frames exist in the URDF, but there is no simulated camera sensor yet |
 
 ## Mission
@@ -33,17 +33,47 @@ Developed as a case study in the M.Eng. Mechatronics programme at TH Deggendorf.
 2. Arm to `home`, gripper open.
 3. **Nav2** drives to a staging pose 0.70 m in front of the **pickup pedestal**, facing it.
 4. **LiDAR docking:** fit a line to the pedestal face, correct any sideways offset (turn 90°, drive, turn back), square up and creep to 0.17 m from the face.
-5. Pick sequence (fixed arm poses for now), arm to carry pose, back off 0.35 m.
-6. Repeat steps 3–5 at the **drop pedestal** and place.
+5. **Pick:**
+   - Estimate the cube position from the docking measurement (face distance + 4 cm, sideways offset).
+   - Solve the arm joint angles with analytic inverse kinematics; joint1 turns toward any sideways offset.
+   - Open the gripper, move to a pre-grasp point 7 cm in front of the cube, then forward to the cube.
+   - Close both fingers with 0.2 N each and ask the grasp assist to attach the cube.
+   - Lift 5 cm, move to the carry pose, back off 0.35 m.
+6. Repeat steps 3–4 at the **drop pedestal**, then **place:**
+   - Lower the cube onto the pedestal, release it, open the gripper, retreat, back off.
 
 Why two stages: Nav2 is good at getting within about 10 cm, but a diff-drive robot cannot slide sideways, and the local controller tends to stall near goals close to obstacles. So Nav2 only brings the robot to open space near the pedestal, and a dedicated docking step does the last half metre with centimetre accuracy.
 
-Result of a headless test run:
+### Grasp assist (simulation only)
+
+The OpenMANIPULATOR-X finger links in the ROBOTIS model weigh only 1 g, and Gazebo Classic moves the arm joints by position. When the fingers squeezed the cube, the ODE physics solver became unstable and threw the cube away. In one test a finger was reported at 0.077 m on a joint limited to 0.019 m.
+
+The usual Gazebo Classic workaround is a grasp plugin (the GraspFix plugin works the same way). This project includes its own small one, `mobile_robot_description/src/grasp_assist_plugin.cpp`:
+
+- It provides two services, `/grasp_assist/attach` and `/grasp_assist/detach` (`std_srvs/Trigger`).
+- `attach` first checks that the cube is really between the jaws (within ±3 cm / ±1.5 cm / ±2 cm of the grasp point in the gripper frame). Only then does it fix the cube to the gripper link; otherwise it reports a failed grasp.
+- So the robot still has to drive to the right place, aim the arm correctly and close the fingers on the cube. Only the "holding friction" is replaced by a fixed joint. On a real robot this step would not be needed.
+
+Related changes to the ROBOTIS setup (project copies in `mobile_robot_description/urdf/mobile_robot.ros2_control.xacro` and `config/gazebo_controllers.yaml`; the ROBOTIS package itself is unmodified):
+
+- **Gripper control:** both fingers are effort-controlled by one `JointGroupEffortController` (`/gripper_controller/commands`, `std_msgs/Float64MultiArray`, `[left, right]` in N; negative closes).
+- **No mimic joint:** the right finger is no longer a mimic joint. In Humble's `gazebo_ros2_control` the mimic only copies position commands, so with effort control the right finger went limp.
+- **MoveIt:** MoveIt therefore no longer lists a gripper controller. The arm is still planned and executed through MoveIt; the mission commands the gripper directly.
+
+### Results
+
+Parking accuracy, headless test run:
 
 | Stop | After Nav2 | After docking |
 |---|---|---|
 | Pickup pedestal | 0.70 m from face, 7 mm sideways | 0.180 m, 1.4°, 10 mm sideways |
 | Drop pedestal | 0.75 m from face, 71 mm sideways | 0.179 m, 1.1°, 5 mm sideways |
+
+First full pick-and-place run:
+
+- **Grasp accuracy:** when the gripper closed, the cube was **1 mm** from the planned grasp point.
+- **Where the cube ended up:** it was carried across the arena and placed on the drop pedestal at (−2.21, −0.02, 0.20), upright.
+- **Repeatability:** not measured yet; that is one successful run.
 
 ## World
 
@@ -52,7 +82,7 @@ Result of a headless test run:
 - **Arena:** 6 m × 5 m with walls and three box obstacles.
 - **Pickup pedestal:** 0.25 × 0.25 × 0.18 m at (2.30, −0.30).
 - **Drop pedestal:** same size at (−2.30, 0.0).
-- **Cube:** 5 cm red cube on the pickup pedestal, 2 cm behind its front face.
+- **Cube:** 4 cm red cube on the pickup pedestal, 2 cm behind its front face. The gripper opens to about 8.8 cm and closes to about 3 cm.
 
 The saved map is `mobile_robot_navigation/maps/mobile_robot_map.*`. It was built with `slam_toolbox`. The pedestals were later drawn into the map image by hand when they replaced earlier, larger tables.
 
@@ -170,7 +200,8 @@ ros2 control list_controllers
 | `/navigate_to_pose` | Nav2 action |
 | `/move_action` | MoveIt MoveGroup action |
 | `/arm_controller/follow_joint_trajectory` | arm trajectory action |
-| `/gripper_controller/gripper_cmd` | gripper action |
+| `/gripper_controller/commands` | gripper effort command (`Float64MultiArray`) |
+| `/grasp_assist/attach`, `/grasp_assist/detach` | grasp assist services (simulation only) |
 
 ## Development history
 
@@ -182,13 +213,15 @@ ros2 control list_controllers
 | 4 | Simulated LiDAR, SLAM, AMCL, Nav2 | ✅ |
 | 5 | Unified bringup, scripted mission | ✅ |
 | 6 | Pedestals, Regulated Pure Pursuit, LiDAR docking | ✅ |
-| 7 | **Real grasp:** cube-relative arm targets, grasp tuning, grasp check | ⏳ next |
-| 8 | Simulated camera + cube detection | ⏳ planned |
+| 7 | Real pick and place: cube-relative IK targets, effort gripper, grasp assist | ✅ |
+| 8 | Simulated camera + cube detection | ⏳ next |
 | 9 | Robustness (retries), demo video, report | ⏳ planned |
 
 ## Known limitations
 
-- The pick and place are not real yet (see phase 7).
+- The cube position comes from the known pedestal layout plus the LiDAR docking measurement, not from perception (see phase 8).
+- Holding the cube relies on the simulation-only grasp assist.
+- Only one full pick-and-place run so far; repeatability isn't measured yet.
 - There is no simulated camera; the camera exists only as TF frames.
 - Simulation only; not tested on a physical robot.
 - On a modest laptop the simulation runs at about 0.3–0.5× real time. Running with `gui:=false` helps.

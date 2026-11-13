@@ -10,7 +10,8 @@ from action_msgs.msg import GoalStatus
 
 from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import JointState, LaserScan
+from std_msgs.msg import Float64MultiArray
 from nav2_msgs.action import NavigateToPose
 
 from moveit_msgs.action import MoveGroup
@@ -21,7 +22,6 @@ from moveit_msgs.msg import (
 )
 from moveit_msgs.msg import MoveItErrorCodes
 
-from control_msgs.action import GripperCommand
 from std_srvs.srv import Trigger
 
 
@@ -47,10 +47,19 @@ class MobileManipulationMission(Node):
             '/move_action'
         )
 
-        self.gripper_client = ActionClient(
-            self,
-            GripperCommand,
-            '/gripper_controller/gripper_cmd'
+        # Both fingers are effort controlled
+        # (JointGroupEffortController): [left, right] in N
+        self.gripper_pub = self.create_publisher(
+            Float64MultiArray, '/gripper_controller/commands', 10
+        )
+
+        # Simulation grasp assist (Gazebo plugin): attaches the cube
+        # to the gripper only if it is really between the jaws.
+        self.attach_client = self.create_client(
+            Trigger, '/grasp_assist/attach'
+        )
+        self.detach_client = self.create_client(
+            Trigger, '/grasp_assist/detach'
         )
 
         # =====================================
@@ -65,6 +74,11 @@ class MobileManipulationMission(Node):
         self.create_subscription(LaserScan, '/scan', self._scan_cb, 10)
         self.create_subscription(Odometry, '/odom', self._odom_cb, 10)
 
+        self.gripper_position = None
+        self.create_subscription(
+            JointState, '/joint_states', self._joint_cb, 10
+        )
+
         # =====================================
         # Arm poses
         # =====================================
@@ -77,20 +91,47 @@ class MobileManipulationMission(Node):
             0.3
         ]
 
-        # Previously verified stable arm pose
-        self.arm_work = [
-            0.0,
-            -0.30,
-            0.20,
-            0.10
+        # =====================================
+        # Arm geometry (from the URDF), all in
+        # base_footprint, x forward, z up
+        # =====================================
+
+        self.j1_x = -0.080        # joint1 (yaw) axis
+        self.sh_z = 0.1775        # joint2 (shoulder) height
+        self.link_a = math.hypot(0.024, 0.128)
+        self.link_a_angle = math.atan2(0.128, 0.024)
+        self.link_b = 0.124
+        self.ee_len = 0.126       # link5 -> end_effector_link
+
+        self.joint_limits = [
+            (-2.82, 2.82),
+            (-1.79, 1.57),
+            (-0.94, 1.38),
+            (-1.79, 2.04),
         ]
 
         # =====================================
-        # Gripper positions
+        # Object geometry (from the world)
         # =====================================
 
-        self.gripper_open = 0.019
-        self.gripper_closed = -0.010
+        self.pedestal_top = 0.18
+        self.cube_size = 0.04
+        # cube center behind the pedestal face
+        self.cube_inset = 0.02 + self.cube_size / 2.0
+
+        # =====================================
+        # Gripper (both fingers effort controlled
+        # in simulation, same force on each)
+        #
+        # Positive effort opens (to the 0.019
+        # limit), negative effort closes. The
+        # grasp itself is confirmed by the
+        # grasp assist, which only attaches the
+        # cube if it is between the jaws.
+        # =====================================
+
+        self.gripper_open = 0.4      # N per finger
+        self.gripper_grasp = -0.2    # N per finger (gentle)
 
         # =====================================
         # Navigation stations (pre-grasp poses)
@@ -163,7 +204,8 @@ class MobileManipulationMission(Node):
         self.get_logger().info(
             'Waiting for gripper controller...'
         )
-        self.gripper_client.wait_for_server()
+        while self.gripper_pub.get_subscription_count() == 0:
+            rclpy.spin_once(self, timeout_sec=0.2)
 
         self.get_logger().info(
             'All mission action servers are ready.'
@@ -200,6 +242,168 @@ class MobileManipulationMission(Node):
                 rclpy.spin_once(self, timeout_sec=0.2)
 
         self.destroy_client(client)
+
+    # =========================================
+    # Arm inverse kinematics
+    # =========================================
+
+    def arm_ik(self, x, y, z, pitch=0.0):
+        """Joint angles that put end_effector_link at (x, y, z) in
+        base_footprint with the gripper at the given pitch
+        (0 = horizontal, positive = tilted up). Elbow-up solution.
+        Returns None if unreachable or outside joint limits."""
+
+        q1 = math.atan2(y, x - self.j1_x)
+        r = math.hypot(x - self.j1_x, y)
+
+        wx = r - self.ee_len * math.cos(pitch)
+        wz = (z - self.sh_z) - self.ee_len * math.sin(pitch)
+
+        a = self.link_a
+        b = self.link_b
+        c = (wx * wx + wz * wz - a * a - b * b) / (2.0 * a * b)
+
+        if abs(c) > 1.0:
+            return None
+
+        delta = math.acos(c)
+        t1 = math.atan2(wz, wx) + math.atan2(
+            b * math.sin(delta), a + b * math.cos(delta)
+        )
+        t2 = t1 - delta
+
+        q2 = self.link_a_angle - t1
+        q3 = -t2 - q2
+        q4 = -pitch + t2
+
+        q = [q1, q2, q3, q4]
+
+        for v, (lo, hi) in zip(q, self.joint_limits):
+            if not (lo <= v <= hi):
+                return None
+
+        return q
+
+    def arm_to_point(self, x, y, z, name):
+
+        q = self.arm_ik(x, y, z)
+
+        if q is None:
+            self.get_logger().error(
+                f'{name}: point ({x:.3f}, {y:.3f}, {z:.3f}) '
+                f'is out of reach.'
+            )
+            return False
+
+        self.get_logger().info(
+            f'{name}: EE -> ({x:.3f}, {y:+.3f}, {z:.3f})'
+        )
+
+        return self.move_arm(q, name)
+
+    # =========================================
+    # Grasp check
+    # =========================================
+
+    def _joint_cb(self, msg):
+        pos = dict(zip(msg.name, msg.position))
+        if 'gripper_left_joint' in pos and 'gripper_right_joint' in pos:
+            self.gripper_position = (
+                pos['gripper_left_joint'],
+                pos['gripper_right_joint'],
+            )
+
+    def read_gripper(self, settle=1.0):
+        end = self.get_clock().now().nanoseconds + settle * 1e9
+        while self.get_clock().now().nanoseconds < end:
+            rclpy.spin_once(self, timeout_sec=0.1)
+        return self.gripper_position
+
+    # =========================================
+    # Pick and place
+    # =========================================
+
+    def pick_cube(self):
+
+        d = self.dock_result
+        cx = d['distance'] + self.cube_inset
+        cy = d['lateral']
+        cz = self.pedestal_top + self.cube_size / 2.0
+
+        self.get_logger().info(
+            f'Cube estimated at ({cx:.3f}, {cy:+.3f}, {cz:.3f}) '
+            f'in base_footprint'
+        )
+
+        if not self.move_gripper(self.gripper_open, 'OPEN'):
+            return False
+
+        if not self.arm_to_point(cx - 0.07, cy, cz + 0.005, 'PRE-GRASP'):
+            return False
+
+        if not self.arm_to_point(cx, cy, cz, 'GRASP'):
+            return False
+
+        if not self.move_gripper(self.gripper_grasp, 'CLOSE ON CUBE'):
+            return False
+
+        ok, msg = self.call_trigger(self.attach_client)
+
+        if not ok:
+            self.get_logger().error(f'Grasp FAILED: {msg}')
+            return False
+
+        self.get_logger().info(f'Grasp OK: {msg}')
+
+        if not self.arm_to_point(cx, cy, cz + 0.05, 'LIFT'):
+            return False
+
+        return True
+
+    def call_trigger(self, client, timeout=10.0):
+
+        if not client.wait_for_service(timeout_sec=timeout):
+            return False, f'{client.srv_name} not available'
+
+        future = client.call_async(Trigger.Request())
+        rclpy.spin_until_future_complete(self, future)
+        res = future.result()
+
+        if res is None:
+            return False, 'no response'
+
+        return res.success, res.message
+
+    def place_cube(self):
+
+        d = self.dock_result
+        px = d['distance'] + self.cube_inset
+        py = d['lateral']
+        pz = self.pedestal_top + self.cube_size / 2.0 + 0.005
+
+        self.get_logger().info(
+            f'Placing at ({px:.3f}, {py:+.3f}, {pz:.3f}) '
+            f'in base_footprint'
+        )
+
+        if not self.arm_to_point(px, py, pz + 0.05, 'PRE-PLACE'):
+            return False
+
+        if not self.arm_to_point(px, py, pz, 'PLACE'):
+            return False
+
+        ok, msg = self.call_trigger(self.detach_client)
+        if not ok:
+            self.get_logger().error(f'Release failed: {msg}')
+            return False
+
+        if not self.move_gripper(self.gripper_open, 'RELEASE'):
+            return False
+
+        if not self.arm_to_point(px - 0.07, py, pz + 0.01, 'RETREAT'):
+            return False
+
+        return True
 
     # =========================================
     # Sensor callbacks
@@ -775,62 +979,27 @@ class MobileManipulationMission(Node):
     # Gripper
     # =========================================
 
-    def move_gripper(self, position, name):
+    def move_gripper(self, effort, name, settle=1.5):
+        """Apply the same effort to both fingers and wait for them to
+        settle (open: against the joint limit; close: on the object)."""
 
-        self.get_logger().info(
-            f'Gripper: {name}'
-        )
+        self.get_logger().info(f'Gripper: {name} ({effort:+.2f} N)')
 
-        goal = GripperCommand.Goal()
+        msg = Float64MultiArray()
+        msg.data = [float(effort), float(effort)]
+        self.gripper_pub.publish(msg)
 
-        goal.command.position = position
-        goal.command.max_effort = 1.0
+        pos = self.read_gripper(settle)
 
-        send_future = (
-            self.gripper_client.send_goal_async(goal)
-        )
-
-        rclpy.spin_until_future_complete(
-            self,
-            send_future
-        )
-
-        goal_handle = send_future.result()
-
-        if goal_handle is None or not goal_handle.accepted:
-
-            self.get_logger().error(
-                f'Gripper {name} goal rejected.'
-            )
-
+        if pos is None:
+            self.get_logger().error('No gripper joint states.')
             return False
 
-        result_future = goal_handle.get_result_async()
-
-        rclpy.spin_until_future_complete(
-            self,
-            result_future
+        self.get_logger().info(
+            f'Gripper {name} complete: '
+            f'fingers at ({pos[0]:.4f}, {pos[1]:.4f})'
         )
-
-        action_result = result_future.result()
-
-        if (
-            action_result is not None and
-            action_result.status ==
-            GoalStatus.STATUS_SUCCEEDED
-        ):
-
-            self.get_logger().info(
-                f'Gripper {name} complete.'
-            )
-
-            return True
-
-        self.get_logger().error(
-            f'Gripper {name} failed.'
-        )
-
-        return False
+        return True
 
     # =========================================
     # Full mission
@@ -883,19 +1052,10 @@ class MobileManipulationMission(Node):
             return False
 
         # ---------------------------------
-        # Simulated pickup sequence
+        # Pick the cube
         # ---------------------------------
 
-        if not self.move_arm(
-            self.arm_work,
-            'WORK / PICK'
-        ):
-            return False
-
-        if not self.move_gripper(
-            self.gripper_closed,
-            'CLOSE'
-        ):
+        if not self.pick_cube():
             return False
 
         if not self.move_arm(
@@ -922,19 +1082,10 @@ class MobileManipulationMission(Node):
             return False
 
         # ---------------------------------
-        # Simulated place sequence
+        # Place the cube
         # ---------------------------------
 
-        if not self.move_arm(
-            self.arm_work,
-            'WORK / PLACE'
-        ):
-            return False
-
-        if not self.move_gripper(
-            self.gripper_open,
-            'OPEN'
-        ):
+        if not self.place_cube():
             return False
 
         if not self.move_arm(

@@ -1,6 +1,5 @@
 controller_names:
   - arm_controller
-  - gripper_controller
 
 arm_controller:
   type: FollowJointTrajectory
@@ -11,9 +10,7 @@ arm_controller:
     - joint2
     - joint3
     - joint4
-gripper_controller:
-  type: GripperCommand
-  action_ns: gripper_cmd
-  default: true
-  joints:
-    - gripper_left_joint
+
+# The gripper is driven by an effort group controller
+# (/gripper_controller/commands) in simulation, which MoveIt
+# cannot execute; the mission commands it directly.

@@ -11,7 +11,8 @@
 
 <xacro:include filename="$(find turtlebot3_manipulation_description)/gazebo/open_manipulator_x.gazebo.xacro"/>
 
-<xacro:include filename="$(find turtlebot3_manipulation_description)/ros2_control/turtlebot3_manipulation_system.ros2_control.xacro"/>
+<!-- Project copy with an effort-controlled gripper -->
+<xacro:include filename="$(find mobile_robot_description)/urdf/mobile_robot.ros2_control.xacro"/>
 
   <!-- ================================ -->
   <!-- Materials                        -->
@@ -534,7 +535,7 @@
 <xacro:open_manipulator_x prefix=""/>
 <xacro:open_manipulator_x_gazebo prefix=""/>
 
-<xacro:turtlebot3_manipulation_system
+<xacro:mobile_robot_ros2_control
   name="TurtleBot3ManipulationSystem"
   prefix=""
   use_sim="$(arg use_sim)"
@@ -543,7 +544,7 @@
 
 <gazebo>
   <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
-    <parameters>$(find turtlebot3_manipulation_bringup)/config/gazebo_controller_manager.yaml</parameters>
+    <parameters>$(find mobile_robot_description)/config/gazebo_controllers.yaml</parameters>
   </plugin>
 </gazebo>
 
