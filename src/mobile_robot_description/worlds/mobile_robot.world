@@ -341,6 +341,140 @@
 
     </model>
 
+    <!-- ================================= -->
+    <!-- PICKUP STATION                    -->
+    <!-- ================================= -->
+
+    <model name="pickup_table">
+      <static>true</static>
+
+      <!-- Pickup pedestal: 0.25 x 0.25 x 0.18 m, open east side.
+           Robot approaches head-on along +x; near face at x = 2.175. -->
+      <pose>2.30 -0.30 0.09 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.18</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.18</size>
+            </box>
+          </geometry>
+
+          <material>
+            <ambient>0.55 0.40 0.25 1</ambient>
+            <diffuse>0.55 0.40 0.25 1</diffuse>
+          </material>
+        </visual>
+
+      </link>
+    </model>
+
+
+    <!-- ================================= -->
+    <!-- PICKUP CUBE                       -->
+    <!-- ================================= -->
+
+    <model name="pickup_cube">
+      <static>false</static>
+
+      <!-- Pedestal top = 0.18 m, cube = 5 cm, so center z = 0.205 m
+           (about the arm's shoulder height). Cube front face is 2 cm
+           behind the pedestal's near face (x = 2.175), so the cube
+           center is 0.045 m in: x = 2.22. With the robot docked 0.17 m
+           from the face, the cube is ~0.215 m ahead of base_footprint. -->
+      <pose>2.22 -0.30 0.205 0 0 0</pose>
+
+      <link name="cube_link">
+
+        <inertial>
+          <mass>0.05</mass>
+
+          <inertia>
+            <ixx>0.0000208</ixx>
+            <iyy>0.0000208</iyy>
+            <izz>0.0000208</izz>
+          </inertia>
+        </inertial>
+
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.05 0.05 0.05</size>
+            </box>
+          </geometry>
+
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.0</mu>
+                <mu2>1.0</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.05 0.05 0.05</size>
+            </box>
+          </geometry>
+
+          <material>
+            <ambient>0.8 0.15 0.15 1</ambient>
+            <diffuse>0.8 0.15 0.15 1</diffuse>
+          </material>
+        </visual>
+
+      </link>
+    </model>
+
+
+    <!-- ================================= -->
+    <!-- DROP STATION                      -->
+    <!-- ================================= -->
+
+    <model name="drop_table">
+      <static>true</static>
+
+      <!-- Drop pedestal: 0.25 x 0.25 x 0.18 m, open west side.
+           Robot approaches head-on along -x; near face at x = -2.175. -->
+      <pose>-2.30 0.0 0.09 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.18</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.25 0.25 0.18</size>
+            </box>
+          </geometry>
+
+          <material>
+            <ambient>0.25 0.45 0.65 1</ambient>
+            <diffuse>0.25 0.45 0.65 1</diffuse>
+          </material>
+        </visual>
+
+      </link>
+    </model>
 
   </world>
 

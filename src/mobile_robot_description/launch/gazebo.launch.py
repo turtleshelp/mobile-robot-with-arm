@@ -1,8 +1,8 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess
+from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess, DeclareLaunchArgument, AppendEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
-from launch.substitutions import Command
+from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -40,8 +40,10 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-	    'world': world_file,
-            'extra_gazebo_args': '-u'
+            'world': world_file,
+            'extra_gazebo_args': '-u',
+            # gui:=false runs without the Gazebo window (much less CPU)
+            'gui': LaunchConfiguration('gui'),
         }.items()
     )
 
@@ -103,7 +105,31 @@ def generate_launch_description():
         output='screen'
     )
 
+    # Let Gazebo resolve package:// meshes of the
+    # OpenMANIPULATOR-X (otherwise the arm is
+    # invisible unless ~/.bashrc sets this).
+    model_paths = [
+        os.path.dirname(get_package_share_directory(pkg))
+        for pkg in (
+            'mobile_robot_description',
+            'turtlebot3_manipulation_description',
+        )
+    ]
+
+    gazebo_model_path = AppendEnvironmentVariable(
+        'GAZEBO_MODEL_PATH',
+        os.pathsep.join(model_paths)
+    )
+
     return LaunchDescription([
+
+        gazebo_model_path,
+
+        DeclareLaunchArgument(
+            'gui',
+            default_value='true',
+            description='Show the Gazebo window (false = headless)'
+        ),
 
         gazebo,
         robot_state_publisher,
