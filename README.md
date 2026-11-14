@@ -201,32 +201,6 @@ ros2 control list_controllers
 # joint_state_broadcaster, arm_controller, gripper_controller should be active
 ```
 
-## Recording a demo video
-
-The demo above was made with fixed cameras that are only spawned on request. Their positions are in `mobile_robot_description/config/demo_cameras.yaml` (overview, pickup close-up, drop close-up). Gazebo saves their frames in simulation time, so the video is smooth even when the simulation runs slower than real time.
-
-Terminal 1:
-
-```bash
-ros2 launch mobile_robot_bringup mobile_manipulation.launch.py \
-  gui:=false record:=true record_dir:=/tmp/mobile_robot_recording
-```
-
-Terminal 2, keeping the mission output as the event log for the edit:
-
-```bash
-ros2 run mobile_robot_bringup mobile_manipulation_mission.py 2>&1 \
-  | sed -u 's/^/0|/' | tee /tmp/mission_events.log
-```
-
-Then cut the frames into an MP4 and a GIF (needs `ffmpeg`):
-
-```bash
-python3 tools/make_demo_video.py /tmp/mobile_robot_recording /tmp/mission_events.log docs/media
-```
-
-The script switches cameras by mission phase (overview while driving, close-ups from docking until backing off), speeds driving up more than manipulation, and labels each phase. It matches log lines to frames by their timestamps.
-
 ## Main interfaces
 
 | Interface | Type |
