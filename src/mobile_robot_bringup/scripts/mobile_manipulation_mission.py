@@ -4,6 +4,7 @@ import math
 
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 from rclpy.action import ActionClient
 
 from action_msgs.msg import GoalStatus
@@ -15,6 +16,9 @@ from std_msgs.msg import Float64MultiArray
 from nav2_msgs.action import NavigateToPose
 
 from moveit_msgs.action import MoveGroup
+from control_msgs.action import FollowJointTrajectory
+from trajectory_msgs.msg import JointTrajectoryPoint
+from builtin_interfaces.msg import Duration
 from moveit_msgs.msg import (
     Constraints,
     JointConstraint,
@@ -29,7 +33,15 @@ class MobileManipulationMission(Node):
 
     def __init__(self):
 
-        super().__init__('mobile_manipulation_mission')
+        # Use simulation time like every other node, so all timeouts
+        # here are in simulated seconds (the sim may run slower than
+        # real time on a busy machine).
+        super().__init__(
+            'mobile_manipulation_mission',
+            parameter_overrides=[
+                Parameter('use_sim_time', Parameter.Type.BOOL, True)
+            ],
+        )
 
         # =====================================
         # Action clients
@@ -45,6 +57,14 @@ class MobileManipulationMission(Node):
             self,
             MoveGroup,
             '/move_action'
+        )
+
+        # Straight-line moves near the cube go directly
+        # to the arm controller (no random planner detours)
+        self.traj_client = ActionClient(
+            self,
+            FollowJointTrajectory,
+            '/arm_controller/follow_joint_trajectory'
         )
 
         # Both fingers are effort controlled
@@ -75,6 +95,7 @@ class MobileManipulationMission(Node):
         self.create_subscription(Odometry, '/odom', self._odom_cb, 10)
 
         self.gripper_position = None
+        self.arm_position = None
         self.create_subscription(
             JointState, '/joint_states', self._joint_cb, 10
         )
@@ -117,7 +138,23 @@ class MobileManipulationMission(Node):
         self.pedestal_top = 0.18
         self.cube_size = 0.04
         # cube center behind the pedestal face
-        self.cube_inset = 0.02 + self.cube_size / 2.0
+        # (front face 1 cm behind the edge)
+        self.cube_inset = 0.01 + self.cube_size / 2.0
+
+        # Stop the end effector this far short of
+        # the cube center: the cube is still between
+        # the finger pads, and the wide gripper palm
+        # (about 3.4 cm behind the end effector, and
+        # lower than the pedestal top) stays ~8 mm
+        # in front of the pedestal edge. With a
+        # position-driven arm any touch throws the
+        # cube.
+        self.grasp_short = 0.008
+
+        # Grasp this much above the cube center:
+        # the palm's lower edge then stays level
+        # with the pedestal top
+        self.grasp_high = 0.005
 
         # =====================================
         # Gripper (both fingers effort controlled
@@ -307,6 +344,9 @@ class MobileManipulationMission(Node):
 
     def _joint_cb(self, msg):
         pos = dict(zip(msg.name, msg.position))
+        arm = ['joint1', 'joint2', 'joint3', 'joint4']
+        if all(j in pos for j in arm):
+            self.arm_position = [pos[j] for j in arm]
         if 'gripper_left_joint' in pos and 'gripper_right_joint' in pos:
             self.gripper_position = (
                 pos['gripper_left_joint'],
@@ -323,6 +363,103 @@ class MobileManipulationMission(Node):
     # Pick and place
     # =========================================
 
+    def fingertip(self, q):
+        """Fingertip x and end-effector z in base_footprint (FK)."""
+        q1, q2, q3, q4 = q
+        t1 = self.link_a_angle - q2
+        t2 = -(q2 + q3)
+        t3 = -(q2 + q3 + q4)
+        r = (self.link_a * math.cos(t1) + self.link_b * math.cos(t2)
+             + self.ee_len * math.cos(t3))
+        z = (self.link_a * math.sin(t1) + self.link_b * math.sin(t2)
+             + self.ee_len * math.sin(t3))
+        tip = r + 0.021 * math.cos(t3)
+        return self.j1_x + tip * math.cos(q1), self.sh_z + z
+
+    def send_trajectory(self, waypoints, duration, name):
+
+        goal = FollowJointTrajectory.Goal()
+        goal.trajectory.joint_names = ['joint1', 'joint2', 'joint3', 'joint4']
+
+        n = len(waypoints)
+        for i, q in enumerate(waypoints, start=1):
+            pt = JointTrajectoryPoint()
+            pt.positions = list(q)
+            t = duration * i / n
+            pt.time_from_start = Duration(
+                sec=int(t), nanosec=int((t % 1.0) * 1e9)
+            )
+            goal.trajectory.points.append(pt)
+
+        send = self.traj_client.send_goal_async(goal)
+        rclpy.spin_until_future_complete(self, send)
+        handle = send.result()
+
+        if handle is None or not handle.accepted:
+            self.get_logger().error(f'{name}: trajectory rejected')
+            return False
+
+        res = handle.get_result_async()
+        rclpy.spin_until_future_complete(self, res)
+        result = res.result()
+
+        if result is None or result.result.error_code != 0:
+            code = None if result is None else result.result.error_code
+            self.get_logger().error(f'{name}: trajectory failed ({code})')
+            return False
+
+        self.get_logger().info(f'Arm reached {name}.')
+        return True
+
+    def arm_joint_move(self, q_target, name, duration=4.0, steps=20,
+                       max_tip_x=None):
+        """Move all joints evenly from the current pose to q_target
+        (deterministic, unlike a sampling planner). If max_tip_x is
+        given, the whole path is checked first and the move is refused
+        if the fingertips would come closer than that."""
+
+        while self.arm_position is None:
+            rclpy.spin_once(self, timeout_sec=0.1)
+
+        q0 = list(self.arm_position)
+        path = [
+            [a + (i / steps) * (b - a) for a, b in zip(q0, q_target)]
+            for i in range(1, steps + 1)
+        ]
+
+        if max_tip_x is not None:
+            worst = max(self.fingertip(q)[0] for q in path)
+            if worst > max_tip_x:
+                self.get_logger().error(
+                    f'{name}: path would bring the fingertips to '
+                    f'x={worst:.3f} (limit {max_tip_x:.3f}); refusing.'
+                )
+                return False
+
+        self.get_logger().info(f'Moving arm to {name} (joint path)')
+        return self.send_trajectory(path, duration, name)
+
+    def arm_line(self, p0, p1, name, duration=3.0, steps=10):
+        """Move the end effector along a straight line p0 -> p1
+        (base_footprint), solving IK at each waypoint and sending the
+        whole trajectory straight to the arm controller."""
+
+        self.get_logger().info(
+            f'{name}: line ({p0[0]:.3f}, {p0[1]:+.3f}, {p0[2]:.3f}) -> '
+            f'({p1[0]:.3f}, {p1[1]:+.3f}, {p1[2]:.3f})'
+        )
+
+        path = []
+        for i in range(1, steps + 1):
+            f = i / steps
+            q = self.arm_ik(*[a + f * (b - a) for a, b in zip(p0, p1)])
+            if q is None:
+                self.get_logger().error(f'{name}: waypoint {i} out of reach')
+                return False
+            path.append(q)
+
+        return self.send_trajectory(path, duration, name)
+
     def pick_cube(self):
 
         d = self.dock_result
@@ -335,13 +472,32 @@ class MobileManipulationMission(Node):
             f'in base_footprint'
         )
 
+        gx = cx - self.grasp_short
+        gz = cz + self.grasp_high
+        pre = (cx - 0.07, cy, gz)
+        grasp = (gx, cy, gz)
+        lift = (gx, cy, gz + 0.05)
+
         if not self.move_gripper(self.gripper_open, 'OPEN'):
             return False
 
-        if not self.arm_to_point(cx - 0.07, cy, cz + 0.005, 'PRE-GRASP'):
+        # Even joint move to pre-grasp, checked in advance: the
+        # fingertips must stay 2 cm in front of the cube. (MoveIt's
+        # random planner does not know the cube and once swung the
+        # open gripper into it.)
+        q_pre = self.arm_ik(*pre)
+        if q_pre is None:
+            self.get_logger().error('PRE-GRASP out of reach')
             return False
 
-        if not self.arm_to_point(cx, cy, cz, 'GRASP'):
+        cube_front = cx - self.cube_size / 2.0
+        if not self.arm_joint_move(
+            q_pre, 'PRE-GRASP', max_tip_x=cube_front - 0.02
+        ):
+            return False
+
+        # Final approach: straight line toward the cube
+        if not self.arm_line(pre, grasp, 'GRASP'):
             return False
 
         if not self.move_gripper(self.gripper_grasp, 'CLOSE ON CUBE'):
@@ -355,7 +511,7 @@ class MobileManipulationMission(Node):
 
         self.get_logger().info(f'Grasp OK: {msg}')
 
-        if not self.arm_to_point(cx, cy, cz + 0.05, 'LIFT'):
+        if not self.arm_line(grasp, lift, 'LIFT'):
             return False
 
         return True
@@ -377,19 +533,40 @@ class MobileManipulationMission(Node):
     def place_cube(self):
 
         d = self.dock_result
-        px = d['distance'] + self.cube_inset
+        # Same geometry as the pick: cube center sits grasp_short ahead
+        # of and grasp_high below the end effector. Release with the
+        # cube bottom 3 mm above the pedestal top.
+        px = d['distance'] + self.cube_inset - self.grasp_short
         py = d['lateral']
-        pz = self.pedestal_top + self.cube_size / 2.0 + 0.005
+        pz = (
+            self.pedestal_top + self.cube_size / 2.0 + 0.003
+            + self.grasp_high
+        )
 
         self.get_logger().info(
             f'Placing at ({px:.3f}, {py:+.3f}, {pz:.3f}) '
             f'in base_footprint'
         )
 
-        if not self.arm_to_point(px, py, pz + 0.05, 'PRE-PLACE'):
+        above = (px, py, pz + 0.05)
+        place = (px, py, pz)
+        retreat = (px - 0.07, py, pz)
+
+        q_above = self.arm_ik(*above)
+        if q_above is None:
+            self.get_logger().error('PRE-PLACE out of reach')
             return False
 
-        if not self.arm_to_point(px, py, pz, 'PLACE'):
+        if not self.arm_joint_move(q_above, 'PRE-PLACE'):
+            return False
+
+        if not self.arm_line(above, place, 'PLACE'):
+            return False
+
+        # Open the fingers first, while the cube is still attached:
+        # detaching with the fingers squeezing (slightly sunk into the
+        # cube) made the physics throw the cube away.
+        if not self.move_gripper(self.gripper_open, 'OPEN'):
             return False
 
         ok, msg = self.call_trigger(self.detach_client)
@@ -397,10 +574,9 @@ class MobileManipulationMission(Node):
             self.get_logger().error(f'Release failed: {msg}')
             return False
 
-        if not self.move_gripper(self.gripper_open, 'RELEASE'):
-            return False
+        self.get_logger().info('Cube released.')
 
-        if not self.arm_to_point(px - 0.07, py, pz + 0.01, 'RETREAT'):
+        if not self.arm_line(place, retreat, 'RETREAT'):
             return False
 
         return True
@@ -611,9 +787,9 @@ class MobileManipulationMission(Node):
             sum(r[k] for r in results) / n for k in range(3)
         ) + (results[-1][3],)
 
-    def correct_lateral_offset(self, name, tolerance=0.03):
+    def correct_lateral_offset(self, name, tolerance=0.015):
 
-        for attempt in range(2):
+        for attempt in range(3):
 
             # Face the table squarely first so the
             # lateral measurement is meaningful
@@ -1020,6 +1196,7 @@ class MobileManipulationMission(Node):
         )
 
         self.wait_for_servers()
+        self.traj_client.wait_for_server()
 
         # ---------------------------------
         # Prepare robot
@@ -1058,10 +1235,7 @@ class MobileManipulationMission(Node):
         if not self.pick_cube():
             return False
 
-        if not self.move_arm(
-            self.arm_home,
-            'CARRY / HOME'
-        ):
+        if not self.arm_joint_move(self.arm_home, 'CARRY / HOME'):
             return False
 
         if not self.back_up():
@@ -1088,10 +1262,7 @@ class MobileManipulationMission(Node):
         if not self.place_cube():
             return False
 
-        if not self.move_arm(
-            self.arm_home,
-            'HOME'
-        ):
+        if not self.arm_joint_move(self.arm_home, 'HOME'):
             return False
 
         if not self.back_up():

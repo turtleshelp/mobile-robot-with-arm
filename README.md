@@ -36,11 +36,14 @@ Developed as a case study in the M.Eng. Mechatronics programme at TH Deggendorf.
 5. **Pick:**
    - Estimate the cube position from the docking measurement (face distance + 4 cm, sideways offset).
    - Solve the arm joint angles with analytic inverse kinematics; joint1 turns toward any sideways offset.
-   - Open the gripper, move to a pre-grasp point 7 cm in front of the cube, then forward to the cube.
+   - Open the gripper and move to a pre-grasp point 7 cm in front of the cube. This is an even joint move whose fingertip path is checked in advance to stay 2 cm clear of the cube.
+   - Slide straight in, along a line with IK solved at 10 waypoints, stopping 8 mm short of the cube center and 5 mm above it. That keeps the wide gripper palm in front of the pedestal edge.
    - Close both fingers with 0.2 N each and ask the grasp assist to attach the cube.
    - Lift 5 cm, move to the carry pose, back off 0.35 m.
 6. Repeat steps 3–4 at the **drop pedestal**, then **place:**
-   - Lower the cube onto the pedestal, release it, open the gripper, retreat, back off.
+   - Lower the cube straight down onto the pedestal, open the gripper, then release it from the grasp assist (in that order, otherwise the physics throws the cube), retreat in a straight line, back off.
+
+Near the pedestals the arm never uses MoveIt's sampling planner (RRTConnect). It doesn't know about the cube and pedestal, and it once swung the open gripper into the cube. MoveIt is only used for the first move to `home` at the start.
 
 Why two stages: Nav2 is good at getting within about 10 cm, but a diff-drive robot cannot slide sideways, and the local controller tends to stall near goals close to obstacles. So Nav2 only brings the robot to open space near the pedestal, and a dedicated docking step does the last half metre with centimetre accuracy.
 
@@ -69,11 +72,17 @@ Parking accuracy, headless test run:
 | Pickup pedestal | 0.70 m from face, 7 mm sideways | 0.180 m, 1.4°, 10 mm sideways |
 | Drop pedestal | 0.75 m from face, 71 mm sideways | 0.179 m, 1.1°, 5 mm sideways |
 
-First full pick-and-place run:
+Repeatability, **5 full missions** in a row, each in a freshly started headless simulation:
 
-- **Grasp accuracy:** when the gripper closed, the cube was **1 mm** from the planned grasp point.
-- **Where the cube ended up:** it was carried across the arena and placed on the drop pedestal at (−2.21, −0.02, 0.20), upright.
-- **Repeatability:** not measured yet; that is one successful run.
+| Trial | Result | Cube vs. grasp point at grasp | Cube final (x, y) |
+|---|---|---|---|
+| 1 | ✅ | 1.0 cm | (−2.205, +0.002) |
+| 2 | ✅ | 0.8 cm | (−2.205, +0.008) |
+| 3 | ❌ localization error: the robot docked against the wrong surface; the grasp check refused, cube untouched | n/a | on the pickup pedestal |
+| 4 | ✅ | 1.2 cm | (−2.203, −0.009) |
+| 5 | ✅ | 0.9 cm | (−2.204, −0.005) |
+
+That gives **4 of 5 successful**, with no failed grasps. The grasp offset is mostly the intended 8 mm stop-short. A success here means Gazebo shows the cube upright on the drop pedestal afterwards. The trial 3 failure was AMCL localization, not manipulation; it is under investigation.
 
 ## World
 
@@ -221,7 +230,7 @@ ros2 control list_controllers
 
 - The cube position comes from the known pedestal layout plus the LiDAR docking measurement, not from perception (see phase 8).
 - Holding the cube relies on the simulation-only grasp assist.
-- Only one full pick-and-place run so far; repeatability isn't measured yet.
+- 4 of 5 trials succeeded; one failed because AMCL localized the robot wrongly (see Results).
 - There is no simulated camera; the camera exists only as TF frames.
 - Simulation only; not tested on a physical robot.
 - On a modest laptop the simulation runs at about 0.3–0.5× real time. Running with `gui:=false` helps.

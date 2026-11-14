@@ -401,9 +401,10 @@
       <static>false</static>
 
       <!-- 4 cm cube (the gripper opens to ~8.8 cm and closes to ~3 cm).
-           Pedestal top = 0.18 m, so center z = 0.20 m. Front face 2 cm
-           behind the pedestal face (x = 2.175): center x = 2.215. -->
-      <pose>2.215 -0.30 0.20 0 0 0</pose>
+           Pedestal top = 0.18 m, so center z = 0.20 m. Front face 1 cm
+           behind the pedestal face (x = 2.175): center x = 2.205. Close
+           to the edge so the gripper palm stays in front of the pedestal. -->
+      <pose>2.205 -0.30 0.20 0 0 0</pose>
 
       <link name="cube_link">
 
