@@ -117,7 +117,18 @@ mobile_robot_gripper_ws/src/
 
 ## Setup
 
-### 1. Dependencies
+Tested on Ubuntu 22.04 with ROS 2 Humble already installed.
+
+### 1. Get this repository
+
+The repository is the workspace itself:
+
+```bash
+cd ~
+git clone https://github.com/turtleshelp/mobile-robot-with-arm.git mobile_robot_gripper_ws
+```
+
+### 2. Dependencies
 
 ```bash
 sudo apt install ros-humble-desktop ros-humble-gazebo-ros-pkgs \
@@ -126,16 +137,19 @@ sudo apt install ros-humble-desktop ros-humble-gazebo-ros-pkgs \
   ros-humble-slam-toolbox ros-humble-rmw-cyclonedds-cpp
 ```
 
-### 2. External ROBOTIS package
+### 3. External ROBOTIS package
 
-The OpenMANIPULATOR-X description comes from the official ROBOTIS TurtleBot3 Manipulation packages. This repository's `.gitignore` excludes it, so clone it yourself:
+The OpenMANIPULATOR-X description comes from the official ROBOTIS TurtleBot3 Manipulation packages. This repository's `.gitignore` excludes it, so clone it yourself, at the version this project was tested with:
 
 ```bash
 cd ~/mobile_robot_gripper_ws/src
 git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_manipulation.git
+git -C turtlebot3_manipulation checkout 814f140
 ```
 
-### 3. Use Cyclone DDS
+The project uses its own copies of the ROBOTIS ros2_control and controller files; the ROBOTIS package itself is used unmodified.
+
+### 4. Use Cyclone DDS
 
 With the default Fast DDS, Nav2/AMCL sometimes never finished activating on a loaded machine, because lifecycle service replies were lost. Cyclone DDS fixed this. Add it to `~/.bashrc`:
 
@@ -143,7 +157,7 @@ With the default Fast DDS, Nav2/AMCL sometimes never finished activating on a lo
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ```
 
-### 4. Build
+### 5. Build
 
 ```bash
 cd ~/mobile_robot_gripper_ws
@@ -234,6 +248,10 @@ ros2 control list_controllers
 - There is no simulated camera; the camera exists only as TF frames.
 - Simulation only; not tested on a physical robot.
 - On a modest laptop the simulation runs at about 0.3–0.5× real time. Running with `gui:=false` helps.
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE). The ROBOTIS TurtleBot3 Manipulation packages, cloned separately, are under their own license.
 
 ## Author
 

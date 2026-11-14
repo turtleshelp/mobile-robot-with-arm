@@ -19,7 +19,6 @@ install(
   DIRECTORY
     launch
     urdf
-    rviz
     meshes
     worlds
     config
