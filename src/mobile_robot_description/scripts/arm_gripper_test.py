@@ -4,9 +4,8 @@ import time
 import rclpy
 from rclpy.node import Node
 
+from std_msgs.msg import Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from control_msgs.action import GripperCommand
-from rclpy.action import ActionClient
 
 
 class ArmGripperTest(Node):
@@ -20,10 +19,12 @@ class ArmGripperTest(Node):
             10
         )
 
-        self.gripper_client = ActionClient(
-            self,
-            GripperCommand,
-            '/gripper_controller/gripper_cmd'
+        # Both fingers are effort controlled: [left, right] in N,
+        # positive opens, negative closes
+        self.gripper_pub = self.create_publisher(
+            Float64MultiArray,
+            '/gripper_controller/commands',
+            10
         )
 
         self.get_logger().info('Arm + gripper test started')
@@ -51,19 +52,17 @@ class ArmGripperTest(Node):
             f'Arm command: {positions}'
         )
 
-    def move_gripper(self, position):
+    def move_gripper(self, effort):
 
-        self.gripper_client.wait_for_server()
+        while self.gripper_pub.get_subscription_count() == 0:
+            rclpy.spin_once(self, timeout_sec=0.2)
 
-        goal = GripperCommand.Goal()
-
-        goal.command.position = position
-        goal.command.max_effort = 1.0
-
-        self.gripper_client.send_goal_async(goal)
+        msg = Float64MultiArray()
+        msg.data = [float(effort), float(effort)]
+        self.gripper_pub.publish(msg)
 
         self.get_logger().info(
-            f'Gripper command: {position}'
+            f'Gripper effort: {effort:+.2f} N per finger'
         )
 
 
@@ -82,13 +81,13 @@ def main(args=None):
     time.sleep(7.0)
 
     # Open gripper
-    node.move_gripper(0.019)
+    node.move_gripper(0.4)
 
     rclpy.spin_once(node, timeout_sec=0.5)
     time.sleep(2.0)
 
     # Close gripper
-    node.move_gripper(-0.010)
+    node.move_gripper(-0.4)
 
     rclpy.spin_once(node, timeout_sec=0.5)
     time.sleep(2.0)

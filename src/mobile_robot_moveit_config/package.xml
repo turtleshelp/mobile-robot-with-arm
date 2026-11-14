@@ -6,8 +6,8 @@
   <description>
     MoveIt 2 configuration for the mobile robot with 4-DOF manipulator.
   </description>
-  <maintainer email="turtleshelp@users.noreply.github.com">Muhammad Ali Sadiq</maintainer>
-  <license>Apache 2.0</license>
+  <maintainer email="128761677+turtleshelp@users.noreply.github.com">Muhammad Ali Sadiq</maintainer>
+  <license>Apache-2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>moveit_ros_move_group</exec_depend>
   <exec_depend>moveit_kinematics</exec_depend>
