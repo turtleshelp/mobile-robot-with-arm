@@ -1,11 +1,84 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess, DeclareLaunchArgument, AppendEnvironmentVariable
+from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess, DeclareLaunchArgument, AppendEnvironmentVariable, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
+import math
 import os
+import tempfile
+
+import yaml
+
+
+def demo_cameras_sdf(config, record_dir):
+    """Static model with one camera per entry in demo_cameras.yaml.
+    Gazebo saves every frame (in simulation time) to record_dir/<name>."""
+
+    links = []
+    for name, cam in config['cameras'].items():
+        px, py, pz = cam['position']
+        tx, ty, tz = cam['look_at']
+        dx, dy, dz = tx - px, ty - py, tz - pz
+        yaw = math.atan2(dy, dx)
+        pitch = math.atan2(-dz, math.hypot(dx, dy))  # + looks down
+        out = os.path.join(record_dir, name)
+        os.makedirs(out, exist_ok=True)
+        links.append(f'''
+    <link name="{name}">
+      <pose>{px} {py} {pz} 0 {pitch:.4f} {yaw:.4f}</pose>
+      <sensor name="{name}_cam" type="camera">
+        <always_on>true</always_on>
+        <update_rate>{config['update_rate']}</update_rate>
+        <camera>
+          <horizontal_fov>{cam['fov']}</horizontal_fov>
+          <image>
+            <width>{config['width']}</width>
+            <height>{config['height']}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip><near>0.05</near><far>50</far></clip>
+          <save enabled="true"><path>{out}</path></save>
+        </camera>
+      </sensor>
+    </link>''')
+
+    return f'''<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="demo_cameras">
+    <static>true</static>{''.join(links)}
+  </model>
+</sdf>
+'''
+
+
+def spawn_demo_cameras(context, pkg_mobile_robot):
+
+    if context.perform_substitution(LaunchConfiguration('record')).lower() != 'true':
+        return []
+
+    record_dir = os.path.expanduser(
+        context.perform_substitution(LaunchConfiguration('record_dir'))
+    )
+
+    with open(os.path.join(pkg_mobile_robot, 'config', 'demo_cameras.yaml')) as f:
+        config = yaml.safe_load(f)
+
+    sdf = tempfile.NamedTemporaryFile(
+        'w', suffix='_demo_cameras.sdf', delete=False
+    )
+    sdf.write(demo_cameras_sdf(config, record_dir))
+    sdf.close()
+
+    return [
+        Node(
+            package='gazebo_ros',
+            executable='spawn_entity.py',
+            arguments=['-file', sdf.name, '-entity', 'demo_cameras'],
+            output='screen'
+        )
+    ]
 
 
 def generate_launch_description():
@@ -131,9 +204,27 @@ def generate_launch_description():
             description='Show the Gazebo window (false = headless)'
         ),
 
+        DeclareLaunchArgument(
+            'record',
+            default_value='false',
+            description='Spawn the demo cameras (config/demo_cameras.yaml) '
+                        'and save their frames for a video'
+        ),
+
+        DeclareLaunchArgument(
+            'record_dir',
+            default_value='/tmp/mobile_robot_recording',
+            description='Where the demo cameras save their frames'
+        ),
+
         gazebo,
         robot_state_publisher,
         spawn_robot,
+
+        OpaqueFunction(
+            function=spawn_demo_cameras,
+            args=[pkg_mobile_robot]
+        ),
 
         # Give Gazebo and gazebo_ros2_control time to start.
         TimerAction(
