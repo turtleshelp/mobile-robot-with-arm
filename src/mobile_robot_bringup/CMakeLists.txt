@@ -12,7 +12,6 @@ install(
 
 install(
   PROGRAMS
-    scripts/initial_pose_publisher.py
     scripts/mobile_manipulation_mission.py
   DESTINATION lib/${PROJECT_NAME}
 )

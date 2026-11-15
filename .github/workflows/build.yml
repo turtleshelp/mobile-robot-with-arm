@@ -1,0 +1,51 @@
+name: build
+
+# Builds the workspace from scratch in a clean ROS 2 Humble container,
+# following the same steps as the README quick start.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    container: ros:humble-ros-base-jammy
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+
+      - name: Clone the ROBOTIS arm description (pinned, as in the README)
+        run: |
+          apt-get update
+          apt-get install -y git
+          git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_manipulation.git src/turtlebot3_manipulation
+          git -C src/turtlebot3_manipulation checkout 814f140
+
+      - name: Install dependencies with rosdep
+        run: |
+          source /opt/ros/humble/setup.bash
+          rosdep update --rosdistro humble
+          rosdep install --from-paths src --ignore-src -y -r --rosdistro humble
+
+      - name: Build
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --event-handlers console_cohesion+
+
+      - name: Check the robot model and scripts
+        run: |
+          source install/setup.bash
+          # the full robot model (base + arm + ros2_control) must render
+          xacro src/mobile_robot_description/urdf/mobile_base.urdf.xacro > /tmp/robot.urdf
+          grep -q 'gripper_left_joint' /tmp/robot.urdf
+          # the grasp assist plugin must be built
+          test -f install/mobile_robot_description/lib/libgrasp_assist_plugin.so
+          # all Python launch files and scripts must at least compile
+          python3 -m py_compile src/*/launch/*.py src/*/scripts/*.py tools/*.py

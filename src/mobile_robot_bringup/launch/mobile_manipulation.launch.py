@@ -118,17 +118,14 @@ def generate_launch_description():
 
     # =====================================
     # Startup sequence
+    #
+    # AMCL sets its own initial pose when it
+    # activates (set_initial_pose in
+    # nav2_params.yaml). A separate publisher
+    # used to send it on a timer, which once
+    # raced the startup and left AMCL several
+    # metres off.
     # =====================================
-
-    initial_pose = Node(
-        package='mobile_robot_bringup',
-        executable='initial_pose_publisher.py',
-        name='initial_pose_publisher',
-        output='screen',
-        parameters=[
-            {'use_sim_time': True}
-        ]
-    )
 
     return LaunchDescription([
 
@@ -145,16 +142,6 @@ def generate_launch_description():
                     msg='[Bringup] Starting map server and AMCL...'
                 ),
                 localization,
-            ]
-        ),
-
-        TimerAction(
-            period=10.0,
-            actions=[
-                LogInfo(
-                    msg='[Bringup] Initializing AMCL pose...'
-                ),
-                initial_pose,
             ]
         ),
 

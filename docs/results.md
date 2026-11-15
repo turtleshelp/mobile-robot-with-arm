@@ -18,7 +18,13 @@ Five full missions in a row, each in a freshly started simulation:
 
 That gives **4 of 5 successful**, with no failed grasps. The grasp offset is mostly the intended 8 mm stop-short.
 
-In trial 3, AMCL localized the robot wrongly at startup, so it docked against the wrong surface. The grasp check found no cube between the jaws and stopped the mission, and the cube was untouched. The cause is still under investigation. AMCL received its initial pose unusually early (simulation time 1.4 s), while TF was still extrapolating.
+In trial 3, AMCL localized the robot wrongly at startup, so it docked against the wrong surface. The grasp check found no cube between the jaws and stopped the mission, and the cube was untouched.
+
+**Follow-up:**
+- **Tracking runs:** 5 more full runs logged Gazebo's true robot position next to AMCL's estimate. All 5 succeeded, and AMCL never lost track, so the failure is rare and could not be reproduced. In the failed run, AMCL had received its initial pose unusually early (simulation time 1.4 s), while TF was still extrapolating; that is the most likely cause but is not proven.
+- **Two changes in response:**
+  - AMCL now sets its own initial pose when it activates (`set_initial_pose`), instead of relying on a separately timed `/initialpose` message.
+  - **Localization check:** on arrival in front of each pedestal, the mission checks that the LiDAR sees a face about 0.25 m wide at about 0.70 m. If not, it stops with "Localization check FAILED" before the arm moves. This is the actual safeguard, whatever the cause.
 
 ## Parking accuracy
 

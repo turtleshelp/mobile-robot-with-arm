@@ -38,6 +38,15 @@ amcl:
     z_rand: 0.5
     z_short: 0.05
     scan_topic: scan
+    # The robot always spawns at the map origin. Let AMCL set this
+    # itself on activation instead of relying on a timed /initialpose
+    # message (which once raced the startup).
+    set_initial_pose: true
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
 
 bt_navigator:
   ros__parameters:

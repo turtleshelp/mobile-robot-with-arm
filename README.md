@@ -17,7 +17,7 @@ Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on
   - analytic inverse kinematics for the 4-DOF arm
   - straight-line approach and lift
   - an effort-controlled gripper
-- **Safety checks:** the arm's path is checked before moving near the cube, and the grasp is verified before lifting
+- **Safety checks:** localization is checked on arrival at each pedestal, the arm's path is checked before moving near the cube, and the grasp is verified before lifting
 - **One-command bringup:** Gazebo, `ros2_control`, AMCL, Nav2 and MoveIt start together
 
 ## How it fits together
@@ -131,7 +131,7 @@ A fresh clone of this repository, set up by following only this README, builds a
 - **Simulation only;** not tested on a physical robot.
 - **Grasp assist:** holding the cube relies on a simulation-only plugin that attaches it to the gripper, but only once the cube is verified between the jaws. Gazebo Classic's physics cannot hold an object with the 1 g ROBOTIS finger links. See [docs/design.md](docs/design.md#grasp-assist-simulation-only).
 - **No perception yet:** the cube position comes from the known pedestal layout plus the LiDAR docking measurement. The camera exists only as TF frames; camera-based detection is the next step.
-- **Localization:** about 1 in 5 runs, AMCL started with a wrong position. This is under investigation.
+- **Localization:** in one early run, AMCL started with a wrong position; the cause could not be reproduced in later runs. AMCL now sets its own start pose, and the mission checks that the pedestal is where the map says before the arm moves, so a localization error stops the mission safely instead of grasping at the wrong place.
 - **Speed:** the simulation runs at about 0.3–0.5× real time on a modest laptop.
 
 ## Documentation

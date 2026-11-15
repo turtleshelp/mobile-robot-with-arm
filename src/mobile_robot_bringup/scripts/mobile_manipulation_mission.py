@@ -213,6 +213,11 @@ class MobileManipulationMission(Node):
 
         self.backup_distance = 0.35
 
+        # Expected view on arrival, for the
+        # localization check (see the world)
+        self.staging_distance = 0.70
+        self.pedestal_width = 0.25
+
     # =========================================
     # Wait for all required action servers
     # =========================================
@@ -679,8 +684,9 @@ class MobileManipulationMission(Node):
 
         y_vals = [p[1] for p in pts]
         lateral = (min(y_vals) + max(y_vals)) / 2.0
+        width = max(y_vals) - min(y_vals)
 
-        return distance, yaw_error, lateral, n
+        return distance, yaw_error, lateral, n, width
 
     def _wait_for_fresh_scan(self, timeout=3.0):
         self.latest_scan = None
@@ -783,9 +789,35 @@ class MobileManipulationMission(Node):
             return None
 
         n = len(results)
-        return tuple(
-            sum(r[k] for r in results) / n for k in range(3)
-        ) + (results[-1][3],)
+        avg = [sum(r[k] for r in results) / n for k in range(5)]
+        return avg[0], avg[1], avg[2], results[-1][3], avg[4]
+
+    def pedestal_where_expected(self, name, m):
+        """Localization check on arrival: Nav2 stops 0.70 m in front of
+        a 0.25 m wide pedestal face. If the LiDAR sees something else
+        (e.g. a wall, because AMCL is wrong about where the robot is),
+        stop before the arm moves."""
+
+        dist, width = m[0], m[4]
+        ok = (
+            abs(dist - self.staging_distance) < 0.25 and
+            abs(width - self.pedestal_width) < 0.09
+        )
+
+        msg = (
+            f'{name}: saw a face {width:.2f} m wide at {dist:.2f} m '
+            f'(expected {self.pedestal_width:.2f} m wide at about '
+            f'{self.staging_distance:.2f} m)'
+        )
+
+        if ok:
+            self.get_logger().info(f'Localization check OK: {msg}')
+        else:
+            self.get_logger().error(
+                f'Localization check FAILED: {msg}. The robot is probably '
+                f'not where AMCL thinks it is.'
+            )
+        return ok
 
     def correct_lateral_offset(self, name, tolerance=0.015):
 
@@ -798,6 +830,9 @@ class MobileManipulationMission(Node):
                 self.get_logger().error(
                     f'{name}: table edge not visible.'
                 )
+                return False
+
+            if attempt == 0 and not self.pedestal_where_expected(name, m):
                 return False
 
             if abs(m[1]) > math.radians(2):
@@ -871,7 +906,7 @@ class MobileManipulationMission(Node):
                 self._stop()
                 continue
 
-            dist, yaw_err, lateral, n = m
+            dist, yaw_err, lateral, n, _ = m
             last = (round(dist, 3), round(yaw_err, 3), round(lateral, 3))
 
             dist_err = dist - self.dock_distance

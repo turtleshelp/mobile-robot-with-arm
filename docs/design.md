@@ -10,6 +10,7 @@ How the mission works, why it is built this way, and what had to be changed to m
 2. **Prepare:** arm to `home`, gripper open.
 3. **Drive:** Nav2 goes to a staging pose 0.70 m in front of the **pickup pedestal**, facing it.
 4. **Dock with the LiDAR:**
+   - **localization check:** the LiDAR must see a face about 0.25 m wide at about 0.70 m, otherwise the mission stops before the arm moves
    - fit a line to the pedestal face
    - correct any sideways offset (turn 90°, drive, turn back)
    - square up and creep to 0.17 m from the face
@@ -67,6 +68,10 @@ Changes in those copies:
 - **Gripper control:** both fingers are effort-controlled by one `JointGroupEffortController` (`/gripper_controller/commands`, `std_msgs/Float64MultiArray`, `[left, right]` in N; negative closes). Position-controlled fingers are teleported by Gazebo and knocked the cube off the pedestal.
 - **No mimic joint:** the right finger is no longer a mimic joint. In Humble's `gazebo_ros2_control` the mimic only copies position commands, so with effort control the right finger went limp.
 - **MoveIt:** MoveIt therefore no longer lists a gripper controller. The arm is still planned through MoveIt for the `home` move; the mission commands the gripper directly.
+
+## Startup localization
+
+The robot always spawns at the map origin, so AMCL sets its own initial pose (0, 0, 0) when it activates (`set_initial_pose` in `nav2_params.yaml`). An earlier helper node sent `/initialpose` on a timer instead.
 
 ## Middleware
 
