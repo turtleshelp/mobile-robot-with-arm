@@ -1,5 +1,7 @@
 # Mobile Robot with Arm
 
+[![build](https://github.com/turtleshelp/mobile-robot-with-arm/actions/workflows/build.yml/badge.svg)](https://github.com/turtleshelp/mobile-robot-with-arm/actions/workflows/build.yml)
+
 An autonomous mobile manipulator in simulation: a **TurtleBot3 Waffle Pi** base with a **ROBOTIS OpenMANIPULATOR-X** arm. It drives to a pedestal, picks up a cube, carries it across the room and places it on a second pedestal.
 
 Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on Ubuntu 22.04, as a case study in the M.Eng. Mechatronics programme at TH Deggendorf.
