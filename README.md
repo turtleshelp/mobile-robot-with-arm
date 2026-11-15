@@ -10,6 +10,14 @@ Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on
 
 *One full autonomous run, sped up. The inset shows what the robot camera sees when it finds the cube. Full video: [docs/media/mobile_manipulation_demo.mp4](docs/media/mobile_manipulation_demo.mp4)*
 
+## The robot
+
+<p align="center"><img src="docs/media/robot.png" alt="TurtleBot3 Waffle Pi with OpenMANIPULATOR-X arm reaching forward" width="640"></p>
+
+![The robot from three angles](docs/media/robot_views.png)
+
+*The simulated robot: a TurtleBot3 Waffle Pi base with a 2D LiDAR and an RGB-D camera, and a 4-DOF OpenMANIPULATOR-X arm with a two-finger gripper. Rendered in Gazebo.*
+
 ## Features
 
 - **Navigation:** SLAM-built map, AMCL localization, Nav2 with a Rotation Shim + Regulated Pure Pursuit controller
