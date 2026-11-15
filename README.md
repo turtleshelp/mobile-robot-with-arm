@@ -74,7 +74,17 @@ git -C turtlebot3_manipulation checkout 814f140
 sudo apt install ros-humble-desktop ros-humble-gazebo-ros-pkgs \
   ros-humble-gazebo-ros2-control ros-humble-ros2-control ros-humble-ros2-controllers \
   ros-humble-moveit ros-humble-navigation2 ros-humble-nav2-bringup \
-  ros-humble-slam-toolbox ros-humble-rmw-cyclonedds-cpp
+  ros-humble-slam-toolbox ros-humble-rmw-cyclonedds-cpp \
+  python3-rosdep ffmpeg
+
+# 2b. Everything else the packages declare (e.g. dynamixel_sdk and
+#     cartographer_ros for the ROBOTIS package). rosdep init is only
+#     needed once per machine; ignore its error if it was already done.
+sudo rosdep init
+rosdep update
+cd ~/mobile_robot_gripper_ws
+source /opt/ros/humble/setup.bash
+rosdep install --from-paths src --ignore-src -r -y
 
 # 3. Build
 cd ~/mobile_robot_gripper_ws
