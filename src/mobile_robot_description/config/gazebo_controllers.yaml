@@ -1,3 +1,5 @@
+# Modifications Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 # Project copy of ROBOTIS turtlebot3_manipulation_bringup/config/
 # gazebo_controller_manager.yaml (humble branch).
 # Change: gripper_controller is a JointGroupEffortController that drives

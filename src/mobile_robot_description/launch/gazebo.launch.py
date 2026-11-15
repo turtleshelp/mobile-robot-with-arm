@@ -1,3 +1,6 @@
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
+
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess, DeclareLaunchArgument, AppendEnvironmentVariable, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource

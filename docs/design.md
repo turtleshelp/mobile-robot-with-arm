@@ -101,6 +101,7 @@ With the default Fast DDS, Nav2/AMCL sometimes never finished activating on a lo
 - **Pickup pedestal:** 0.25 × 0.25 × 0.18 m at (2.30, −0.30).
 - **Drop pedestal:** same size at (−2.30, 0.0).
 - **Cube:** 4 cm red cube, 30 g, on the pickup pedestal, 1 cm behind its front face. The gripper opens to about 8.8 cm and closes to about 3 cm.
+- **Attribution marks:** `github.com/turtleshelp` on the floor near the south wall (a static visual with no collision, so it does not affect physics, the LiDAR or the map) and on a name plate on each side of the robot base (visual only, merged into `base_link`). Their texture is grey-blue and white on blue, never red, so the cube detector ignores them. Textures and the material script are in `mobile_robot_description/media/`. See [NOTICE](../NOTICE).
 
 The saved map (`mobile_robot_navigation/maps/mobile_robot_map.*`) was built with `slam_toolbox`. The pedestals were later drawn into the map image by hand, when they replaced earlier, larger tables.
 

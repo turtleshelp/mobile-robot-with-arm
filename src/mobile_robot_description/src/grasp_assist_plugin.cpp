@@ -1,3 +1,6 @@
+// Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+// SPDX-License-Identifier: Apache-2.0
+
 // Grasp assist for Gazebo Classic.
 //
 // Why: the OpenMANIPULATOR-X finger links weigh 1 g. When they squeeze a

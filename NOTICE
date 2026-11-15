@@ -1,0 +1,23 @@
+Mobile Robot with Arm
+Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+https://github.com/turtleshelp/mobile-robot-with-arm
+
+This product includes software developed by Muhammad Ali Sadiq as an
+M.Eng. Mechatronics case study at the Deggendorf Institute of Technology
+(TH Deggendorf).
+
+Under section 4(d) of the Apache License 2.0, any redistribution of this
+work or of a derivative work must include a readable copy of the
+attribution notices in this NOTICE file. The simulation shows the author's
+GitHub name on the arena floor and on the robot as part of that
+attribution.
+
+Third-party material in this repository:
+- Robot meshes (src/mobile_robot_description/meshes) and the files
+  urdf/mobile_robot.ros2_control.xacro and config/gazebo_controllers.yaml
+  are copied or derived from ROBOTIS TurtleBot3 / turtlebot3_manipulation,
+  Copyright ROBOTIS Co., Ltd., Apache License 2.0.
+- The MoveIt configuration (src/mobile_robot_moveit_config) was generated
+  with the MoveIt Setup Assistant.
+- config/nav2_params.yaml and config/slam_toolbox.yaml are based on the
+  default parameter files of Nav2 and slam_toolbox.

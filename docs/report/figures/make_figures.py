@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 """Charts for the report, from ../data/runs.json. Writes vector PDFs here.
 
 Usage: python3 make_figures.py

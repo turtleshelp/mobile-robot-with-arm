@@ -1,4 +1,6 @@
 <?xml version="1.0"?>
+<!-- Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp).
+     Licensed under the Apache License 2.0, see LICENSE and NOTICE. -->
 
 <robot name="mobile_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
@@ -91,6 +93,42 @@
     </inertial>
 
   </link>
+
+
+  <!-- ================================ -->
+  <!-- NAME PLATES (attribution, see NOTICE) -->
+  <!-- Visual only, no collision, no inertia of their own. The fixed
+       joints let Gazebo merge them into base_link. -->
+  <!-- ================================ -->
+
+  <xacro:macro name="name_plate" params="side y yaw">
+    <link name="name_plate_${side}">
+      <visual>
+        <geometry>
+          <box size="0.12 0.001 0.03"/>
+        </geometry>
+      </visual>
+    </link>
+    <joint name="name_plate_${side}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="name_plate_${side}"/>
+      <origin xyz="-0.13 ${y} 0.075" rpy="0 0 ${yaw}"/>
+    </joint>
+    <gazebo reference="name_plate_${side}">
+      <visual>
+        <material>
+          <script>
+            <uri>model://mobile_robot_description/media/materials/scripts</uri>
+            <uri>model://mobile_robot_description/media/materials/textures</uri>
+            <name>Turtleshelp/NamePlate</name>
+          </script>
+        </material>
+      </visual>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:name_plate side="left"  y="0.143"  yaw="0"/>
+  <xacro:name_plate side="right" y="-0.143" yaw="${pi}"/>
 
 
   <!-- ================================ -->

@@ -1,3 +1,7 @@
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
+# Based on the Nav2 default parameters (Apache-2.0), tuned for this project.
+
 amcl:
   ros__parameters:
     use_sim_time: True

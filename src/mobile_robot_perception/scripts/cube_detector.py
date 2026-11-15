@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 """Find the red cube in the RGB-D camera image and publish its 3D position.
 
 Pipeline, for every synchronized colour + depth frame:

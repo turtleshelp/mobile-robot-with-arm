@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 
 import math
 
@@ -1394,6 +1396,12 @@ class MobileManipulationMission(Node):
             'MOBILE MANIPULATION MISSION START'
         )
 
+        # Attribution (see NOTICE)
+        self.get_logger().info(
+            'Mobile Robot with Arm, by Muhammad Ali Sadiq '
+            '(github.com/turtleshelp/mobile-robot-with-arm)'
+        )
+
         self.get_logger().info(
             '================================='
         )
@@ -1500,6 +1508,12 @@ def main(args=None):
         node.get_logger().error(
             'MISSION ABORTED'
         )
+
+    # Stop the TF listener's thread before rclpy shuts down, otherwise
+    # it fails at exit with "the given context is not valid".
+    node.tf_listener.executor.shutdown()
+    node.tf_listener.dedicated_listener_thread.join()
+    node.tf_node.destroy_node()
 
     node.destroy_node()
 

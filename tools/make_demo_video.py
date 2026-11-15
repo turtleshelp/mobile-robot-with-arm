@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 """Turn a recorded demo run into an edited MP4 and a GIF.
 
 Input:
@@ -26,6 +28,7 @@ import sys
 FPS_OUT = 30            # output frame rate
 CAM_HZ = 10             # camera frames per simulated second
 HOLD_S = 1.5            # pause on the camera detection
+INSET_SEGMENT = 2       # index of the 'Camera finds the cube' segment
 FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 
 
@@ -120,8 +123,10 @@ def main(record_dir, events_log, out_dir):
     # every frame kept = 3x real time at 30 fps output
     segments = [
         ('overview', m['drive1'] - 5, m['dock1'], 4, 'Nav2: drive to pickup pedestal'),
-        ('pickup', m['dock1'], m['seen'] + 2 * CAM_HZ, 1,
-         'LiDAR check + camera finds the cube'),
+        ('pickup', m['dock1'], m['seen'] - 2 * CAM_HZ, 6,
+         'LiDAR check + sideways correction'),
+        ('pickup', m['seen'] - 2 * CAM_HZ, m['seen'] + 2 * CAM_HZ, 1,
+         'Camera finds the cube'),
         ('pickup', m['seen'] + 2 * CAM_HZ, m['grasp'], 2,
          'LiDAR docking + approach the detected cube'),
         ('pickup', m['grasp'], m['backup1'], 1, 'Grasp, lift, carry pose, back off'),
@@ -145,11 +150,11 @@ def main(record_dir, events_log, out_dir):
         for i in range(max(a, 0), min(b, len(seq)), step):
             # hold the moment the cube is found for HOLD_S seconds
             repeat = 1
-            if idx == 1 and i == m['seen']:
+            if idx == INSET_SEGMENT and i == m['seen']:
                 repeat = int(HOLD_S * FPS_OUT)
             for _ in range(repeat):
                 out = os.path.join(work, f'{k:06d}.jpg')
-                if idx == 1 and detector:
+                if idx == INSET_SEGMENT and detector:
                     with_inset(seq[i], detector, out)
                 else:
                     os.symlink(seq[i], out)

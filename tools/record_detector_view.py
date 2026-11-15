@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 """Save the cube detector's debug image during a recorded demo run.
 
 Writes every /cube_detection/debug_image frame as a JPEG to

@@ -181,6 +181,8 @@ tools/record_demo.sh       # one recorded mission, cut into an MP4 and a GIF (ne
 
 Apache License 2.0, see [LICENSE](LICENSE). The ROBOTIS TurtleBot3 Manipulation packages, cloned separately, are under their own license.
 
+If you use, modify or redistribute this project, the license requires you to keep the attribution in [NOTICE](NOTICE) (Apache-2.0, section 4(d)). The simulation also shows it: `github.com/turtleshelp` on the arena floor and on name plates on both sides of the robot. If you build on this work, please keep those and cite it; GitHub's "Cite this repository" button uses [CITATION.cff](CITATION.cff).
+
 ## Author
 
 **Muhammad Ali Sadiq**, M.Eng. Mechatronics, TH Deggendorf

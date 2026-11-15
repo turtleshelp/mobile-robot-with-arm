@@ -1,3 +1,6 @@
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
+
 # Fixed cameras for recording demo videos (only spawned with record:=true).
 # Each camera sits at `position` and looks at `look_at` (world frame, m).
 # Frames are saved by Gazebo itself, in simulation time, to

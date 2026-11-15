@@ -1,0 +1,41 @@
+// Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+// SPDX-License-Identifier: Apache-2.0
+// Attribution marks shown in the simulation (see NOTICE).
+
+material Turtleshelp/NamePlate
+{
+  technique
+  {
+    pass
+    {
+      ambient 1 1 1 1
+      diffuse 1 1 1 1
+      texture_unit
+      {
+        texture turtleshelp_plate.png
+        filtering anisotropic
+        max_anisotropy 8
+      }
+    }
+  }
+}
+
+material Turtleshelp/FloorMark
+{
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      ambient 1 1 1 1
+      diffuse 1 1 1 1
+      texture_unit
+      {
+        texture turtleshelp_floor_rot.png
+        filtering anisotropic
+        max_anisotropy 8
+      }
+    }
+  }
+}

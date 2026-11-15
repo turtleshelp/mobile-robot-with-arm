@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 """Extract per-run metrics from saved mission logs into runs.json.
 
 Every run below was a full mission in a freshly started, headless

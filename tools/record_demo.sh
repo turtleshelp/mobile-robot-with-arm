@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 # Record one full mission with the demo cameras and the robot camera's
 # detection view, then cut it into an MP4 and a GIF.
 #

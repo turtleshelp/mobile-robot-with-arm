@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use or build on this project, please cite it as below."
+title: "Mobile Robot with Arm: Autonomous Mobile Pick-and-Place in ROS 2 Simulation"
+type: software
+authors:
+  - family-names: Sadiq
+    given-names: Muhammad Ali
+    alias: turtleshelp
+    affiliation: "Deggendorf Institute of Technology (TH Deggendorf)"
+repository-code: "https://github.com/turtleshelp/mobile-robot-with-arm"
+license: Apache-2.0
+date-released: "2026-11-15"
+keywords:
+  - ROS 2
+  - mobile manipulation
+  - Nav2
+  - MoveIt 2
+  - Gazebo
+  - TurtleBot3
+  - OpenMANIPULATOR-X

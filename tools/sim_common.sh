@@ -1,3 +1,6 @@
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
+
 # Shared helpers for run_trials.sh and record_demo.sh (sourced, not run).
 
 WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

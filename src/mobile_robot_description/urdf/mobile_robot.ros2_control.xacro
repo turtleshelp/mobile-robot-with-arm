@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<!-- Modifications Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp), Apache License 2.0. -->
 <!--
 Copied and modified from ros2 control demos example:
 https://github.com/ros-controls/ros2_control_demos/blob/foxy/ros2_control_demo_description/diffbot_description/ros2_control/diffbot_system.ros2_control.xacro

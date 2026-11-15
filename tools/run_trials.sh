@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp)
+# SPDX-License-Identifier: Apache-2.0
 # Repeated full missions, each in a freshly started headless simulation,
 # with the cube put at a random place on the pickup pedestal before each.
 # A run only counts as a success if Gazebo shows the cube on the drop

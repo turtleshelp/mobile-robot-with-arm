@@ -1,4 +1,6 @@
 <?xml version="1.0" ?>
+<!-- Copyright 2026 Muhammad Ali Sadiq (github.com/turtleshelp).
+     Licensed under the Apache License 2.0, see LICENSE and NOTICE. -->
 <sdf version="1.6">
 
   <world name="default">
@@ -70,6 +72,28 @@
     <include>
       <uri>model://ground_plane</uri>
     </include>
+
+    <!-- Attribution mark on the floor (see NOTICE). Visual only, no
+         collision, so it does not affect physics, the LiDAR or the map. -->
+    <model name="turtleshelp_floor_mark">
+      <static>true</static>
+      <pose>0.6 -1.35 0.001 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box><size>2.6 0.45 0.001</size></box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://mobile_robot_description/media/materials/scripts</uri>
+              <uri>model://mobile_robot_description/media/materials/textures</uri>
+              <name>Turtleshelp/FloorMark</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+    </model>
 
 
     <!-- ================================= -->
