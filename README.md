@@ -4,7 +4,7 @@
 
 An autonomous mobile manipulator in simulation: a **TurtleBot3 Waffle Pi** base with a **ROBOTIS OpenMANIPULATOR-X** arm. It drives to a pedestal, finds the cube on it with its RGB-D camera, picks it up, carries it across the room and places it on a second pedestal.
 
-Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on Ubuntu 22.04, as a case study in the M.Eng. Mechatronics programme at TH Deggendorf.
+Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on Ubuntu 22.04, as a case study in the M.Eng. Mechatronics & Cyber-Physical Systems programme at TH Deggendorf.
 
 ![Autonomous pick and place demo](docs/media/mobile_manipulation_demo.gif)
 
@@ -185,4 +185,4 @@ If you use, modify or redistribute this project, the license requires you to kee
 
 ## Author
 
-**Muhammad Ali Sadiq**, M.Eng. Mechatronics, TH Deggendorf
+**Muhammad Ali Sadiq**, M.Eng. Mechatronics & Cyber-Physical Systems, TH Deggendorf
