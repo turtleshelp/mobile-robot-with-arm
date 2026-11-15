@@ -41,10 +41,14 @@ That gives **4 of 5 successful**, with no failed grasps. The grasp offset is mos
 In trial 3, AMCL localized the robot wrongly at startup, so it docked against the wrong surface. The grasp check found no cube between the jaws and stopped the mission, and the cube was untouched.
 
 **Follow-up:**
-- **Tracking runs:** 5 more full runs logged Gazebo's true robot position next to AMCL's estimate. All 5 succeeded, and AMCL never lost track, so the failure is rare and could not be reproduced. In the failed run, AMCL had received its initial pose unusually early (simulation time 1.4 s), while TF was still extrapolating; that is the most likely cause but is not proven.
+- **Tracking runs:** 5 more full runs logged Gazebo's true robot position next to AMCL's estimate. 4 of 5 succeeded. *Correction (2026-11-15):* this note first said all 5 succeeded and that AMCL never lost track. Both were wrong. The logged positions were garbled by the German number format, so they cannot show how well AMCL tracked. And in run 5 the robot and cube were thrown out of the arena by a physics blow-up at the drop pedestal, while the cube was being released, although the mission printed `MISSION COMPLETE` (see "Undetected failure" below). The start-up mislocalization was not reproduced. In the failed run, AMCL had received its initial pose unusually early (simulation time 1.4 s), while TF was still extrapolating; that is the most likely cause but is not proven.
 - **Two changes in response:**
   - AMCL now sets its own initial pose when it activates (`set_initial_pose`), instead of relying on a separately timed `/initialpose` message.
   - **Localization check:** on arrival in front of each pedestal, the mission checks that the LiDAR sees a face about 0.25 m wide at about 0.70 m. If not, it stops with "Localization check FAILED" before the arm moves. This is the actual safeguard, whatever the cause.
+
+## Undetected failure
+
+In one tracking run (run 5 above), Gazebo became unstable at the drop pedestal while the cube was being released (the gripper opens while the cube is still attached by the grasp assist, then the cube is detached). The robot was thrown more than 10 m out of the arena and the cube ended on the floor. The mission did not notice and printed `MISSION COMPLETE`. The release step has no check yet. This is why every result here is judged by Gazebo, not by the mission's message.
 
 ## Parking accuracy
 
@@ -52,8 +56,10 @@ Typical values from the runs above:
 
 | Stop | After Nav2 | After LiDAR docking |
 |---|---|---|
-| Pickup pedestal | 0.70 m from the face, up to ~5 cm sideways | 0.177–0.180 m, within 2°, within 2 cm sideways |
-| Drop pedestal | 0.75 m from the face, up to ~7 cm sideways | 0.178–0.180 m, within 2°, within 2 cm sideways |
+| Pickup pedestal | 0.63–0.76 m from the face, on average 2.0 cm (at most 5.0 cm) sideways | 0.167–0.180 m, at most 1.8°, on average 1.6 cm (at most 3.3 cm) sideways |
+| Drop pedestal | 0.71–0.77 m from the face, on average 7.2 cm (at most 12.7 cm) sideways, always to the same side | 0.174–0.180 m, at most 2.0°, on average 1.2 cm (at most 2.7 cm) sideways |
+
+From all 17 runs with saved logs (see the report in `docs/report/`). Earlier versions of this table said "within 2 cm sideways", which was based on fewer runs.
 
 ## Fresh-clone check
 

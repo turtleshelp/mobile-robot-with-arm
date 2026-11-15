@@ -21,7 +21,7 @@ Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on
 ## Features
 
 - **Navigation:** SLAM-built map, AMCL localization, Nav2 with a Rotation Shim + Regulated Pure Pursuit controller
-- **Precise parking:** a LiDAR docking step squares the robot up to the pedestal to within about 2 cm and 2°
+- **Precise parking:** a LiDAR docking step squares the robot up to the pedestal to within about 1–3 cm and 2°
 - **Perception:** an RGB-D camera (at the Waffle Pi camera position) finds the red cube by colour, reads its distance from the depth image and computes its 3D position. Tested with the cube placed randomly on the pedestal (±5 cm sideways, ±15° turned), the camera estimate was within 1–3 mm of the true position.
 - **Manipulation:**
   - the grasp targets the cube where the camera saw it
@@ -147,7 +147,7 @@ Every run starts a fresh simulation, and a run only counts as a success if Gazeb
 
 - **With camera detection and a randomly placed cube:** every run in which the camera got to look completed the pick and place, with the camera within 1–3 mm of the true cube position. The failures found along the way were caught by the safety checks before the arm moved, and each was fixed (see [docs/results.md](docs/results.md)).
 - **Grasps:** none failed once the robot reached the cube; the cube was within about 1 cm of the planned grasp point every time.
-- **Parking:** after docking, the robot was within 2 cm and 2° of the target at both pedestals.
+- **Parking:** after docking, the robot was on average 1.2–1.6 cm (at most 3.3 cm) sideways and at most 2° off the target. Nav2 alone was up to 12.7 cm off.
 
 ![Cube detection](docs/media/cube_detection.png)
 
@@ -168,12 +168,14 @@ tools/record_demo.sh       # one recorded mission, cut into an MP4 and a GIF (ne
 - **Grasp assist:** holding the cube relies on a simulation-only plugin that attaches it to the gripper, but only once the cube is verified between the jaws. Gazebo Classic's physics cannot hold an object with the 1 g ROBOTIS finger links. See [docs/design.md](docs/design.md#grasp-assist-simulation-only).
 - **Simple perception:** the detector looks for one saturated red object, so it assumes the cube is the only red thing in view. The cube's height is taken from the known pedestal; x and y come from the camera. The cube must sit near the front edge of the pedestal (within about 2.5 cm), otherwise the gripper palm would hit the pedestal; the mission checks this and refuses instead.
 - **Localization:** in one early run, AMCL started with a wrong position; the cause could not be reproduced in later runs. AMCL now sets its own start pose, and the mission checks that the pedestal is where the map says before the arm moves, so a localization error stops the mission safely instead of grasping at the wrong place.
+- **Release is not checked:** in one run Gazebo became unstable while the cube was being released, and the robot and cube were thrown out of the arena, but the mission still printed `MISSION COMPLETE`. Results are therefore always judged by Gazebo's ground truth. A check after placing is planned.
 - **Speed:** the simulation runs at about 0.3–0.5× real time on a modest laptop.
 
 ## Documentation
 
 - [docs/design.md](docs/design.md): mission sequence, two-stage parking, cube detection, arm motion strategy, grasp assist, changes to the ROBOTIS setup, world and interfaces
 - [docs/results.md](docs/results.md): repeatability, parking accuracy, problems found by testing and their fixes
+- [Case study report (PDF)](docs/report/report.pdf): IEEE-style report with design, equations, evaluation of all logged runs, charts and discussion. LaTeX source, data and chart scripts are in [docs/report/](docs/report/).
 
 ## License
 

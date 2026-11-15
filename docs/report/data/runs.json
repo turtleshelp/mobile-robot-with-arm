@@ -1,0 +1,985 @@
+[
+ {
+  "id": "T1",
+  "group": "tracking",
+  "gazebo_ok": true,
+  "leftover_processes": false,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.679,
+    "lateral": 0.05
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.721,
+    "lateral": -0.074
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.179,
+    "yaw_deg": -0.6,
+    "lateral": -0.007
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.179,
+    "yaw_deg": -0.7,
+    "lateral": 0.011
+   }
+  ],
+  "grasp_offset": [
+   0.004,
+   0.004,
+   -0.004
+  ],
+  "loc_checks": [],
+  "phases_s": {
+   "drive_to_pickup": 31.8,
+   "dock_pickup": 89.8,
+   "pick": 82.3,
+   "drive_to_drop": 67.3,
+   "dock_drop": 75.9,
+   "place": 52.9,
+   "total": 400.0
+  }
+ },
+ {
+  "id": "T2",
+  "group": "tracking",
+  "gazebo_ok": true,
+  "leftover_processes": false,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.665,
+    "lateral": 0.025
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.719,
+    "lateral": -0.047
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.177,
+    "yaw_deg": -0.4,
+    "lateral": 0.008
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.178,
+    "yaw_deg": -0.0,
+    "lateral": 0.002
+   }
+  ],
+  "grasp_offset": [
+   0.007,
+   0.001,
+   -0.004
+  ],
+  "loc_checks": [],
+  "phases_s": {
+   "drive_to_pickup": 27.5,
+   "dock_pickup": 65.7,
+   "pick": 73.3,
+   "drive_to_drop": 65.9,
+   "dock_drop": 60.4,
+   "place": 55.5,
+   "total": 348.3
+  }
+ },
+ {
+  "id": "T3",
+  "group": "tracking",
+  "gazebo_ok": true,
+  "leftover_processes": false,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.666,
+    "lateral": -0.0
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.772,
+    "lateral": -0.066
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.18,
+    "yaw_deg": -0.7,
+    "lateral": 0.016
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.18,
+    "yaw_deg": -0.5,
+    "lateral": -0.027
+   }
+  ],
+  "grasp_offset": [
+   0.009,
+   -0.003,
+   -0.004
+  ],
+  "loc_checks": [],
+  "phases_s": {
+   "drive_to_pickup": 24.8,
+   "dock_pickup": 19.6,
+   "pick": 58.3,
+   "drive_to_drop": 73.1,
+   "dock_drop": 113.9,
+   "place": 61.2,
+   "total": 350.9
+  }
+ },
+ {
+  "id": "T4",
+  "group": "tracking",
+  "gazebo_ok": true,
+  "leftover_processes": false,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.632,
+    "lateral": 0.036
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.765,
+    "lateral": -0.042
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.176,
+    "yaw_deg": 0.8,
+    "lateral": -0.03
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.179,
+    "yaw_deg": -1.0,
+    "lateral": -0.009
+   }
+  ],
+  "grasp_offset": [
+   0.008,
+   -0.001,
+   -0.004
+  ],
+  "loc_checks": [],
+  "phases_s": {
+   "drive_to_pickup": 27.1,
+   "dock_pickup": 91.6,
+   "pick": 65.8,
+   "drive_to_drop": 72.8,
+   "dock_drop": 139.8,
+   "place": 60.5,
+   "total": 457.6
+  }
+ },
+ {
+  "id": "T5",
+  "group": "tracking",
+  "gazebo_ok": false,
+  "leftover_processes": false,
+  "note": "physics blow-up while opening the gripper at the drop pedestal; robot and cube thrown, mission still reported COMPLETE",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.691,
+    "lateral": 0.05
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.74,
+    "lateral": -0.055
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.179,
+    "yaw_deg": -1.8,
+    "lateral": 0.025
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.179,
+    "yaw_deg": -0.8,
+    "lateral": 0.009
+   }
+  ],
+  "grasp_offset": [
+   0.009,
+   -0.004,
+   -0.004
+  ],
+  "loc_checks": [],
+  "phases_s": {
+   "drive_to_pickup": 25.5,
+   "dock_pickup": 70.0,
+   "pick": 66.6,
+   "drive_to_drop": 81.6,
+   "dock_drop": 73.5,
+   "place": 50.2,
+   "total": 367.3
+  }
+ },
+ {
+  "id": "F1",
+  "group": "fresh clone",
+  "gazebo_ok": true,
+  "leftover_processes": false,
+  "note": "fresh clone, before the camera",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.674,
+    "lateral": 0.013
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.744,
+    "lateral": -0.07
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.178,
+    "yaw_deg": 0.8,
+    "lateral": 0.015
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.179,
+    "yaw_deg": 0.7,
+    "lateral": 0.008
+   }
+  ],
+  "grasp_offset": [
+   0.009,
+   0.004,
+   -0.004
+  ],
+  "loc_checks": [],
+  "phases_s": {
+   "drive_to_pickup": 23.2,
+   "dock_pickup": 23.1,
+   "pick": 72.9,
+   "drive_to_drop": 54.9,
+   "dock_drop": 56.3,
+   "place": 44.9,
+   "total": 275.2
+  }
+ },
+ {
+  "id": "C1",
+  "group": "camera",
+  "gazebo_ok": false,
+  "leftover_processes": true,
+  "note": "aborted safely: detections from a leftover test detector in the wrong frame",
+  "mission_result": "ABORTED",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.755,
+    "lateral": -0.0
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.178,
+    "yaw_deg": -0.7,
+    "lateral": -0.009
+   }
+  ],
+  "grasp_offset": null,
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.25,
+    "dist": 0.75
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 21.7,
+   "dock_pickup": 29.9,
+   "pick": null,
+   "drive_to_drop": null,
+   "dock_drop": null,
+   "place": null,
+   "total": 51.6
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.307
+  ],
+  "camera_xyz": [
+   0.785,
+   -0.011,
+   0.205
+  ],
+  "camera_err_mm": 1450.5
+ },
+ {
+  "id": "C2",
+  "group": "camera",
+  "gazebo_ok": false,
+  "leftover_processes": true,
+  "note": "aborted safely: localization check saw a 0.14 m face (scan while still moving)",
+  "mission_result": "ABORTED",
+  "arrival": [],
+  "docked": [],
+  "grasp_offset": null,
+  "loc_checks": [
+   {
+    "result": "FAILED",
+    "pedestal": "PICKUP",
+    "width": 0.14,
+    "dist": 0.7
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 22.3,
+   "dock_pickup": null,
+   "pick": null,
+   "drive_to_drop": null,
+   "dock_drop": null,
+   "place": null,
+   "total": 23.9
+  }
+ },
+ {
+  "id": "C3",
+  "group": "camera",
+  "gazebo_ok": true,
+  "leftover_processes": true,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.742,
+    "lateral": 0.021
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.73,
+    "lateral": -0.083
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.18,
+    "yaw_deg": -0.6,
+    "lateral": -0.008
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.18,
+    "yaw_deg": -0.6,
+    "lateral": 0.015
+   }
+  ],
+  "grasp_offset": [
+   0.006,
+   -0.004,
+   -0.004
+  ],
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.24,
+    "dist": 0.74
+   },
+   {
+    "result": "OK",
+    "pedestal": "DROP",
+    "width": 0.23,
+    "dist": 0.73
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 30.1,
+   "dock_pickup": 133.4,
+   "pick": 83.0,
+   "drive_to_drop": 64.5,
+   "dock_drop": 121.3,
+   "place": 50.6,
+   "total": 483.0
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.27799999999999997
+  ],
+  "camera_xyz": [
+   2.205,
+   -0.277,
+   0.202
+  ],
+  "camera_err_mm": 1.0
+ },
+ {
+  "id": "C4",
+  "group": "camera",
+  "gazebo_ok": true,
+  "leftover_processes": true,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.727,
+    "lateral": 0.006
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.771,
+    "lateral": -0.057
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.167,
+    "yaw_deg": 1.5,
+    "lateral": -0.018
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.178,
+    "yaw_deg": -1.1,
+    "lateral": 0.02
+   }
+  ],
+  "grasp_offset": [
+   0.008,
+   -0.004,
+   -0.004
+  ],
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.24,
+    "dist": 0.73
+   },
+   {
+    "result": "OK",
+    "pedestal": "DROP",
+    "width": 0.24,
+    "dist": 0.77
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 24.8,
+   "dock_pickup": 28.2,
+   "pick": 58.9,
+   "drive_to_drop": 62.5,
+   "dock_drop": 130.7,
+   "place": 55.8,
+   "total": 360.8
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.328
+  ],
+  "camera_xyz": [
+   2.206,
+   -0.325,
+   0.202
+  ],
+  "camera_err_mm": 3.2
+ },
+ {
+  "id": "C5",
+  "group": "camera",
+  "gazebo_ok": true,
+  "leftover_processes": true,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.724,
+    "lateral": -0.021
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.748,
+    "lateral": -0.07
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.179,
+    "yaw_deg": -0.0,
+    "lateral": -0.01
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.178,
+    "yaw_deg": -2.0,
+    "lateral": -0.007
+   }
+  ],
+  "grasp_offset": [
+   0.008,
+   -0.002,
+   -0.004
+  ],
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.24,
+    "dist": 0.73
+   },
+   {
+    "result": "OK",
+    "pedestal": "DROP",
+    "width": 0.23,
+    "dist": 0.75
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 26.4,
+   "dock_pickup": 59.7,
+   "pick": 66.0,
+   "drive_to_drop": 70.1,
+   "dock_drop": 132.2,
+   "place": 59.4,
+   "total": 413.8
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.319
+  ],
+  "camera_xyz": [
+   2.205,
+   -0.317,
+   0.202
+  ],
+  "camera_err_mm": 2.0
+ },
+ {
+  "id": "C6",
+  "group": "camera",
+  "gazebo_ok": false,
+  "leftover_processes": true,
+  "note": "aborted safely: 0 detections, TF thread blocked",
+  "mission_result": "ABORTED",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.735,
+    "lateral": 0.008
+   }
+  ],
+  "docked": [],
+  "grasp_offset": null,
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.24,
+    "dist": 0.73
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 48.0,
+   "dock_pickup": null,
+   "pick": null,
+   "drive_to_drop": null,
+   "dock_drop": null,
+   "place": null,
+   "total": 76.4
+  }
+ },
+ {
+  "id": "C7",
+  "group": "camera",
+  "gazebo_ok": true,
+  "leftover_processes": true,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.738,
+    "lateral": -0.02
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.73,
+    "lateral": -0.11
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.178,
+    "yaw_deg": -0.2,
+    "lateral": -0.033
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.179,
+    "yaw_deg": -1.1,
+    "lateral": 0.016
+   }
+  ],
+  "grasp_offset": [
+   0.005,
+   -0.002,
+   -0.004
+  ],
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.24,
+    "dist": 0.74
+   },
+   {
+    "result": "OK",
+    "pedestal": "DROP",
+    "width": 0.25,
+    "dist": 0.73
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 47.8,
+   "dock_pickup": 147.1,
+   "pick": 118.7,
+   "drive_to_drop": 140.9,
+   "dock_drop": 172.1,
+   "place": 73.2,
+   "total": 699.8
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.284
+  ],
+  "camera_xyz": [
+   2.205,
+   -0.282,
+   0.202
+  ],
+  "camera_err_mm": 2.0
+ },
+ {
+  "id": "C8",
+  "group": "camera",
+  "gazebo_ok": true,
+  "leftover_processes": true,
+  "note": "",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.754,
+    "lateral": -0.029
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.748,
+    "lateral": -0.127
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.18,
+    "yaw_deg": -0.2,
+    "lateral": 0.022
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.178,
+    "yaw_deg": 0.1,
+    "lateral": -0.009
+   }
+  ],
+  "grasp_offset": [
+   0.008,
+   0.005,
+   -0.004
+  ],
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.23,
+    "dist": 0.75
+   },
+   {
+    "result": "OK",
+    "pedestal": "DROP",
+    "width": 0.24,
+    "dist": 0.75
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 49.7,
+   "dock_pickup": 192.0,
+   "pick": 130.5,
+   "drive_to_drop": 138.3,
+   "dock_drop": 149.8,
+   "place": 75.1,
+   "total": 735.5
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.344
+  ],
+  "camera_xyz": [
+   2.205,
+   -0.343,
+   0.202
+  ],
+  "camera_err_mm": 1.0
+ },
+ {
+  "id": "C9",
+  "group": "camera",
+  "gazebo_ok": true,
+  "leftover_processes": false,
+  "note": "demo recording",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.728,
+    "lateral": 0.007
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.712,
+    "lateral": -0.086
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.176,
+    "yaw_deg": 0.6,
+    "lateral": -0.02
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.178,
+    "yaw_deg": -0.4,
+    "lateral": 0.012
+   }
+  ],
+  "grasp_offset": [
+   0.008,
+   0.0,
+   -0.004
+  ],
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.24,
+    "dist": 0.73
+   },
+   {
+    "result": "OK",
+    "pedestal": "DROP",
+    "width": 0.24,
+    "dist": 0.71
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 36.1,
+   "dock_pickup": 32.2,
+   "pick": 63.8,
+   "drive_to_drop": 61.4,
+   "dock_drop": 107.1,
+   "place": 47.9,
+   "total": 348.5
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.32999999999999996
+  ],
+  "camera_xyz": [
+   2.206,
+   -0.329,
+   0.202
+  ],
+  "camera_err_mm": 1.4
+ },
+ {
+  "id": "C10",
+  "group": "camera",
+  "gazebo_ok": true,
+  "leftover_processes": false,
+  "note": "run_trials.sh check",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.72,
+    "lateral": 0.02
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.738,
+    "lateral": -0.034
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.177,
+    "yaw_deg": 0.3,
+    "lateral": -0.013
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.18,
+    "yaw_deg": 1.1,
+    "lateral": -0.019
+   }
+  ],
+  "grasp_offset": [
+   0.005,
+   -0.004,
+   -0.004
+  ],
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.24,
+    "dist": 0.72
+   },
+   {
+    "result": "OK",
+    "pedestal": "DROP",
+    "width": 0.24,
+    "dist": 0.74
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 27.5,
+   "dock_pickup": 82.2,
+   "pick": 78.0,
+   "drive_to_drop": 93.3,
+   "dock_drop": 97.8,
+   "place": 59.9,
+   "total": 438.6
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.293
+  ],
+  "camera_xyz": [
+   2.205,
+   -0.29,
+   0.202
+  ],
+  "camera_err_mm": 3.0
+ },
+ {
+  "id": "C11",
+  "group": "camera",
+  "gazebo_ok": true,
+  "leftover_processes": false,
+  "note": "fresh clone from GitHub",
+  "mission_result": "COMPLETE",
+  "arrival": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.753,
+    "lateral": -0.015
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.752,
+    "lateral": -0.084
+   }
+  ],
+  "docked": [
+   {
+    "pedestal": "PICKUP",
+    "dist": 0.179,
+    "yaw_deg": -1.1,
+    "lateral": -0.001
+   },
+   {
+    "pedestal": "DROP",
+    "dist": 0.174,
+    "yaw_deg": -1.9,
+    "lateral": -0.001
+   }
+  ],
+  "grasp_offset": [
+   0.009,
+   -0.003,
+   -0.004
+  ],
+  "loc_checks": [
+   {
+    "result": "OK",
+    "pedestal": "PICKUP",
+    "width": 0.23,
+    "dist": 0.75
+   },
+   {
+    "result": "OK",
+    "pedestal": "DROP",
+    "width": 0.25,
+    "dist": 0.75
+   }
+  ],
+  "phases_s": {
+   "drive_to_pickup": 28.2,
+   "dock_pickup": 32.1,
+   "pick": 61.3,
+   "drive_to_drop": 79.0,
+   "dock_drop": 171.4,
+   "place": 61.2,
+   "total": 433.4
+  },
+  "cube_true_xy": [
+   2.205,
+   -0.27499999999999997
+  ],
+  "camera_xyz": [
+   2.205,
+   -0.273,
+   0.202
+  ],
+  "camera_err_mm": 2.0
+ }
+]
