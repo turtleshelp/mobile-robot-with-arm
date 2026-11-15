@@ -81,3 +81,5 @@ Each of these caused at least one lost cube or failed run before it was fixed:
 | Nav2/AMCL sometimes never activated (Fast DDS) | Cyclone DDS |
 | Localization check fooled by a scan taken while still moving | measure only when odometry says still; re-check before failing |
 | Detector could not transform images (TF thread blocked) | TF listener in its own thread; fall back to the latest transform |
+| TF listener thread crashed rclpy (it spun the mission node from a second thread) | TF listener on its own small node |
+| `bt_navigator` failed to activate under load (waits only 1 s for the controller) | `wait_for_service_timeout: 5000` |

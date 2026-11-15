@@ -3,7 +3,9 @@
 
 Input:
   record_dir   frames saved by the demo cameras (launch with record:=true),
-               one sub-directory per camera: overview/, pickup/, drop/
+               one sub-directory per camera: overview/, pickup/, drop/,
+               and optionally detector/ (record_detector_view.py), shown
+               as an inset while the robot looks for the cube
   events_log   mission output where every line is prefixed with the number
                of overview frames at that moment: "<frames>|<log line>"
 
@@ -23,6 +25,7 @@ import sys
 
 FPS_OUT = 30            # output frame rate
 CAM_HZ = 10             # camera frames per simulated second
+HOLD_S = 1.5            # pause on the camera detection
 FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 
 
@@ -47,6 +50,7 @@ def event_frames(events_log, overview):
         ('start', r'MOBILE MANIPULATION MISSION START'),
         ('drive1', r'Navigating to x=1\.'),
         ('dock1', r'Docking to PICKUP'),
+        ('seen', r'Cube seen by the camera'),
         ('grasp', r'Arm reached GRASP'),
         ('backup1', r'Back-up complete'),
         ('drive2', r'Navigating to x=-1\.'),
@@ -70,6 +74,41 @@ def event_frames(events_log, overview):
     return marks
 
 
+def inset_source(record_dir):
+    """Detector debug images with their file times, or None."""
+    d = os.path.join(record_dir, 'detector')
+    if not os.path.isdir(d) or not os.listdir(d):
+        return None
+    files = frames(d)
+    return [os.path.getmtime(f) for f in files], files
+
+
+def with_inset(scene_file, detector, out_file):
+    """Scene frame with the detector view (nearest in time) top left,
+    zoomed in on the part of the camera image where the pedestal is."""
+    import bisect
+    import cv2
+    mtimes, files = detector
+    t = os.path.getmtime(scene_file)
+    i = min(bisect.bisect_left(mtimes, t), len(files) - 1)
+    scene = cv2.imread(scene_file)
+    view = cv2.imread(files[i])
+    vh, vw = view.shape[:2]
+    # 1.6x zoom on the part of the image with the pedestal and the
+    # detector's label (which is drawn to the right of the cube)
+    view = view[vh // 16:vh // 16 + vh * 5 // 8, vw * 3 // 8:vw]
+    w = scene.shape[1] * 2 // 5
+    h = view.shape[0] * w // view.shape[1]
+    view = cv2.resize(view, (w, h), interpolation=cv2.INTER_AREA)
+    x0, y0, b = 16, 16, 3
+    scene[y0 - b:y0 + h + b, x0 - b:x0 + w + b] = (255, 255, 255)
+    scene[y0:y0 + h, x0:x0 + w] = view
+    cv2.putText(scene, 'robot camera', (x0 + 8, y0 + h - 10),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2,
+                cv2.LINE_AA)
+    cv2.imwrite(out_file, scene, [cv2.IMWRITE_JPEG_QUALITY, 92])
+
+
 def main(record_dir, events_log, out_dir):
 
     cams = {c: frames(os.path.join(record_dir, c))
@@ -81,7 +120,10 @@ def main(record_dir, events_log, out_dir):
     # every frame kept = 3x real time at 30 fps output
     segments = [
         ('overview', m['drive1'] - 5, m['dock1'], 4, 'Nav2: drive to pickup pedestal'),
-        ('pickup', m['dock1'], m['grasp'], 2, 'LiDAR docking + approach'),
+        ('pickup', m['dock1'], m['seen'] + 2 * CAM_HZ, 1,
+         'LiDAR check + camera finds the cube'),
+        ('pickup', m['seen'] + 2 * CAM_HZ, m['grasp'], 2,
+         'LiDAR docking + approach the detected cube'),
         ('pickup', m['grasp'], m['backup1'], 1, 'Grasp, lift, carry pose, back off'),
         ('overview', m['backup1'], m['dock2'], 4, 'Nav2: carry cube to drop pedestal'),
         ('drop', m['dock2'], m['place'], 2, 'LiDAR docking + lower cube'),
@@ -93,14 +135,25 @@ def main(record_dir, events_log, out_dir):
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(work)
 
+    detector = inset_source(record_dir)
+
     k = 0
     labels = []
-    for cam, a, b, step, label in segments:
+    for idx, (cam, a, b, step, label) in enumerate(segments):
         seq = cams[cam]
         start_t = k / FPS_OUT
         for i in range(max(a, 0), min(b, len(seq)), step):
-            os.symlink(seq[i], os.path.join(work, f'{k:06d}.jpg'))
-            k += 1
+            # hold the moment the cube is found for HOLD_S seconds
+            repeat = 1
+            if idx == 1 and i == m['seen']:
+                repeat = int(HOLD_S * FPS_OUT)
+            for _ in range(repeat):
+                out = os.path.join(work, f'{k:06d}.jpg')
+                if idx == 1 and detector:
+                    with_inset(seq[i], detector, out)
+                else:
+                    os.symlink(seq[i], out)
+                k += 1
         labels.append((start_t, k / FPS_OUT, label))
 
     print(f'{k} output frames, {k / FPS_OUT:.1f} s')

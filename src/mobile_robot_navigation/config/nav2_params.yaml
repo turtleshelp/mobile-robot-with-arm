@@ -56,6 +56,10 @@ bt_navigator:
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
+    # How long each BT action node waits for its server while the tree loads
+    # (default 1000 ms). Under load the controller server can take longer to
+    # be discovered, and then bt_navigator fails to activate.
+    wait_for_service_timeout: 5000
     # 'default_nav_through_poses_bt_xml' and 'default_nav_to_pose_bt_xml' are use defaults:
     # nav2_bt_navigator/navigate_to_pose_w_replanning_and_recovery.xml
     # nav2_bt_navigator/navigate_through_poses_w_replanning_and_recovery.xml

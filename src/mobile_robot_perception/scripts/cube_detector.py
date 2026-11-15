@@ -57,12 +57,20 @@ class CubeDetector(Node):
         self.bridge = CvBridge()
         self.camera_info = None
 
-        # The listener gets its own thread: the image callback waits
-        # for the transform at the image time, and without a separate
-        # thread that wait would block the TF updates it is waiting for.
+        # The listener gets its own node and thread: the image callback
+        # waits for the transform at the image time, and without a
+        # separate thread that wait would block the TF updates it is
+        # waiting for. A separate node, because spinning this node from
+        # two threads would race in rclpy.
         self.tf_buffer = Buffer()
+        self.tf_node = rclpy.create_node(
+            'cube_detector_tf',
+            parameter_overrides=[
+                Parameter('use_sim_time', Parameter.Type.BOOL, True)
+            ],
+        )
         self.tf_listener = TransformListener(
-            self.tf_buffer, self, spin_thread=True
+            self.tf_buffer, self.tf_node, spin_thread=True
         )
 
         self.create_subscription(

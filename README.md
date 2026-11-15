@@ -8,7 +8,7 @@ Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on
 
 ![Autonomous pick and place demo](docs/media/mobile_manipulation_demo.gif)
 
-*One full autonomous run, sped up. Full video: [docs/media/mobile_manipulation_demo.mp4](docs/media/mobile_manipulation_demo.mp4)*
+*One full autonomous run, sped up. The inset shows what the robot camera sees when it finds the cube. Full video: [docs/media/mobile_manipulation_demo.mp4](docs/media/mobile_manipulation_demo.mp4)*
 
 ## Features
 

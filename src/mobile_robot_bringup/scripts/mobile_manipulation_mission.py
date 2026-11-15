@@ -108,9 +108,18 @@ class MobileManipulationMission(Node):
             PointStamped, '/cube_detection/position',
             self._cube_cb, 10
         )
+        # The TF listener gets its own small node, spun in its own thread.
+        # Spinning this node from a second thread would race with the
+        # main thread's spin and can crash rclpy's wait set.
         self.tf_buffer = Buffer()
+        self.tf_node = rclpy.create_node(
+            'mobile_manipulation_mission_tf',
+            parameter_overrides=[
+                Parameter('use_sim_time', Parameter.Type.BOOL, True)
+            ],
+        )
         self.tf_listener = TransformListener(
-            self.tf_buffer, self, spin_thread=True
+            self.tf_buffer, self.tf_node, spin_thread=True
         )
         self.create_subscription(
             JointState, '/joint_states', self._joint_cb, 10

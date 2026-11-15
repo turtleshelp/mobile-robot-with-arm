@@ -42,7 +42,7 @@ The mission uses simulation time, so its timeouts hold when the simulation runs 
   5. Transform to `odom` and publish `/cube_detection/position`, plus `/cube_detection/debug_image` with the detection drawn on it.
 - **Mission:** takes the median of at least 5 detections while standing still and only accepts positions in the `odom` frame.
 - **Accuracy:** with the cube placed randomly (±5 cm sideways, ±15° turned), the estimate was within 1–3 mm of the true position in every run.
-- **Transform timing:** the robot-position transform can lag the camera by a few frames when the simulation is slow. The detector's TF listener runs in its own thread, and if the exact-time transform is not available it uses the latest one. That is exact while the robot stands still, which is the only time the mission uses detections.
+- **Transform timing:** the robot-position transform can lag the camera by a few frames when the simulation is slow. The detector's TF listener runs on its own small node in its own thread, and if the exact-time transform is not available it uses the latest one. That is exact while the robot stands still, which is the only time the mission uses detections.
 
 ## Why two-stage parking
 
