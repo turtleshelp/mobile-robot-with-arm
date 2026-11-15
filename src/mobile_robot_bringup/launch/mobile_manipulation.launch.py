@@ -127,6 +127,14 @@ def generate_launch_description():
     # metres off.
     # =====================================
 
+    # Camera-based cube detection
+    cube_detector = Node(
+        package='mobile_robot_perception',
+        executable='cube_detector.py',
+        name='cube_detector',
+        output='screen',
+    )
+
     return LaunchDescription([
 
         LogInfo(
@@ -134,6 +142,8 @@ def generate_launch_description():
         ),
 
         gazebo,
+
+        cube_detector,
 
         TimerAction(
             period=9.0,

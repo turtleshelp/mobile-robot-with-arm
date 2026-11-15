@@ -447,6 +447,44 @@
 
   <link name="camera_rgb_optical_frame"/>
 
+  <!-- Simulated RGB-D camera at the Waffle Pi camera position.
+       Publishes /camera/image_raw, /camera/depth/image_raw,
+       /camera/camera_info and /camera/points in the frame
+       camera_rgb_optical_frame. Used to find the cube.
+       (Keep colons out of comments here, because the whole URDF is passed to
+       gazebo_ros2_control as one parameter value, and a colon
+       broke its parser.) -->
+  <gazebo reference="camera_rgb_frame">
+    <sensor name="camera" type="depth">
+      <always_on>true</always_on>
+      <update_rate>10</update_rate>
+      <visualize>false</visualize>
+      <camera>
+        <horizontal_fov>1.085</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>5.0</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.005</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <camera_name>camera</camera_name>
+        <frame_name>camera_rgb_optical_frame</frame_name>
+        <min_depth>0.05</min_depth>
+        <max_depth>5.0</max_depth>
+      </plugin>
+    </sensor>
+  </gazebo>
+
   <!-- Gazebo wheel contact/friction -->
 
   <gazebo reference="wheel_left_link">

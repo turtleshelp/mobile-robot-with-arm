@@ -9,7 +9,11 @@ from rclpy.action import ActionClient
 
 from action_msgs.msg import GoalStatus
 
-from geometry_msgs.msg import PoseStamped, Twist
+from geometry_msgs.msg import PointStamped, PoseStamped, Twist
+import tf2_geometry_msgs  # noqa: F401  registers PointStamped transforms
+from tf2_ros import Buffer, TransformException, TransformListener
+from rclpy.duration import Duration as RclpyDuration
+from rclpy.time import Time
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import JointState, LaserScan
 from std_msgs.msg import Float64MultiArray
@@ -96,6 +100,18 @@ class MobileManipulationMission(Node):
 
         self.gripper_position = None
         self.arm_position = None
+
+        # Cube position from the camera (cube_detector node, odom frame)
+        self.cube_detections = []
+        self.cube_odom = None
+        self.create_subscription(
+            PointStamped, '/cube_detection/position',
+            self._cube_cb, 10
+        )
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(
+            self.tf_buffer, self, spin_thread=True
+        )
         self.create_subscription(
             JointState, '/joint_states', self._joint_cb, 10
         )
@@ -468,14 +484,32 @@ class MobileManipulationMission(Node):
     def pick_cube(self):
 
         d = self.dock_result
-        cx = d['distance'] + self.cube_inset
-        cy = d['lateral']
+
+        # Where the camera saw the cube, in the robot frame now
+        seen = self.cube_in_base()
+        if seen is None:
+            return False
+
+        cx, cy = seen.x, seen.y
+        # Height from the known pedestal; the camera's z is logged
         cz = self.pedestal_top + self.cube_size / 2.0
 
         self.get_logger().info(
-            f'Cube estimated at ({cx:.3f}, {cy:+.3f}, {cz:.3f}) '
-            f'in base_footprint'
+            f'Cube (camera) at ({cx:.3f}, {cy:+.3f}, {seen.z:.3f}) '
+            f'in base_footprint; pedestal face at {d["distance"]:.3f}'
         )
+
+        # Only grasp what the gripper can safely reach: the cube must
+        # be on the pedestal, its front face 0-2.5 cm behind the edge
+        # (deeper, and the wide gripper palm would hit the pedestal)
+        inset = cx - self.cube_size / 2.0 - d['distance']
+        if not (-0.01 <= inset <= 0.025) or abs(cy - d['lateral']) > 0.11:
+            self.get_logger().error(
+                f'Cube not graspable here: front face {inset * 100:.1f} cm '
+                f'behind the pedestal edge, {cy - d["lateral"]:+.3f} m '
+                f'from the pedestal center.'
+            )
+            return False
 
         gx = cx - self.grasp_short
         gz = cz + self.grasp_high
@@ -792,7 +826,52 @@ class MobileManipulationMission(Node):
         avg = [sum(r[k] for r in results) / n for k in range(5)]
         return avg[0], avg[1], avg[2], results[-1][3], avg[4]
 
-    def pedestal_where_expected(self, name, m):
+    def wait_until_still(self, still_for=0.5, timeout=3.0):
+        """Stop and wait until odometry shows no motion, so LiDAR scans
+        are not smeared by a robot that is still slowing or turning."""
+
+        self._stop()
+        start = self.get_clock().now().nanoseconds
+        still_since = None
+
+        while rclpy.ok():
+            rclpy.spin_once(self, timeout_sec=0.05)
+            now = self.get_clock().now().nanoseconds
+
+            if (now - start) / 1e9 > timeout:
+                return False
+
+            if self.latest_odom is None:
+                continue
+
+            t = self.latest_odom.twist.twist
+            moving = abs(t.linear.x) > 0.005 or abs(t.angular.z) > 0.01
+
+            if moving:
+                still_since = None
+            elif still_since is None:
+                still_since = now
+            elif (now - still_since) / 1e9 >= still_for:
+                return True
+
+        return False
+
+    def check_pedestal_with_retries(self, name, m, retries=2):
+        """Localization check that tolerates a single bad scan: if it
+        fails, wait until the robot is still and measure again. A real
+        localization error (e.g. facing a wall) fails every time."""
+
+        for attempt in range(retries + 1):
+            if self.pedestal_where_expected(name, m, final=attempt == retries):
+                return m
+            self.wait_until_still()
+            m = self._measure_settled()
+            if m is None:
+                self.get_logger().error(f'{name}: table edge not visible.')
+                return None
+        return None
+
+    def pedestal_where_expected(self, name, m, final=True):
         """Localization check on arrival: Nav2 stops 0.70 m in front of
         a 0.25 m wide pedestal face. If the LiDAR sees something else
         (e.g. a wall, because AMCL is wrong about where the robot is),
@@ -812,6 +891,10 @@ class MobileManipulationMission(Node):
 
         if ok:
             self.get_logger().info(f'Localization check OK: {msg}')
+        elif not final:
+            self.get_logger().warning(
+                f'Localization check doubtful, measuring again: {msg}'
+            )
         else:
             self.get_logger().error(
                 f'Localization check FAILED: {msg}. The robot is probably '
@@ -832,8 +915,10 @@ class MobileManipulationMission(Node):
                 )
                 return False
 
-            if attempt == 0 and not self.pedestal_where_expected(name, m):
-                return False
+            if attempt == 0:
+                m = self.check_pedestal_with_retries(name, m)
+                if m is None:
+                    return False
 
             if abs(m[1]) > math.radians(2):
                 if not self.rotate_by(m[1]):
@@ -863,7 +948,73 @@ class MobileManipulationMission(Node):
 
         return True
 
-    def dock_to_table(self, name, timeout=60.0):
+    # =========================================
+    # Camera: locate the cube from the staging pose
+    # =========================================
+
+    def _cube_cb(self, msg):
+        # Positions must be in a fixed frame so they stay valid while
+        # the robot drives on; ignore anything else.
+        if msg.header.frame_id == 'odom':
+            self.cube_detections.append(msg)
+
+    def locate_cube(self, timeout=5.0, min_detections=5):
+        """Average a few camera detections while standing still at the
+        staging pose (0.7 m from the pedestal, where the cube is in the
+        camera's view) and remember the cube in the odom frame."""
+
+        self.get_logger().info('Looking for the cube with the camera...')
+
+        self.cube_detections = []
+        start = self.get_clock().now()
+        end = start.nanoseconds + timeout * 1e9
+
+        while self.get_clock().now().nanoseconds < end:
+            rclpy.spin_once(self, timeout_sec=0.1)
+            fresh = [
+                d for d in self.cube_detections
+                if Time.from_msg(d.header.stamp) >= start
+            ]
+            if len(fresh) >= min_detections:
+                break
+        else:
+            self.get_logger().error(
+                'Cube not found by the camera '
+                f'({len(self.cube_detections)} detections).'
+            )
+            return False
+
+        xs = sorted(d.point.x for d in fresh)
+        ys = sorted(d.point.y for d in fresh)
+        zs = sorted(d.point.z for d in fresh)
+        mid = len(fresh) // 2
+
+        self.cube_odom = PointStamped()
+        self.cube_odom.header.frame_id = fresh[0].header.frame_id
+        self.cube_odom.point.x = xs[mid]
+        self.cube_odom.point.y = ys[mid]
+        self.cube_odom.point.z = zs[mid]
+
+        self.get_logger().info(
+            f'Cube seen by the camera at ({xs[mid]:.3f}, {ys[mid]:.3f}, '
+            f'{zs[mid]:.3f}) in {self.cube_odom.header.frame_id} '
+            f'({len(fresh)} detections).'
+        )
+        return True
+
+    def cube_in_base(self):
+        """The remembered cube position in base_footprint, now."""
+
+        try:
+            return self.tf_buffer.transform(
+                self.cube_odom, 'base_footprint',
+                timeout=RclpyDuration(seconds=1.0)
+            ).point
+        except TransformException as error:
+            self.get_logger().error(f'Cube transform failed: {error}')
+            return None
+
+    def dock_to_table(self, name, timeout=60.0, at_staging=None):
 
         self.get_logger().info(
             f'Docking to {name} '
@@ -878,7 +1029,15 @@ class MobileManipulationMission(Node):
         # and Nav2 may stop up to ~0.15 m off to the
         # side. Fix that first: turn 90 deg, drive
         # the offset, turn back.
+        # Nav2 may still be slowing down; measure only once still
+        self.wait_until_still()
+
         if not self.correct_lateral_offset(name):
+            return False
+
+        # Something to do while still 0.7 m away, facing the
+        # pedestal (e.g. look for the cube with the camera)
+        if at_staging is not None and not at_staging():
             return False
 
         start = self.get_clock().now().nanoseconds
@@ -1260,7 +1419,9 @@ class MobileManipulationMission(Node):
         ):
             return False
 
-        if not self.dock_to_table('PICKUP PEDESTAL'):
+        if not self.dock_to_table(
+            'PICKUP PEDESTAL', at_staging=self.locate_cube
+        ):
             return False
 
         # ---------------------------------

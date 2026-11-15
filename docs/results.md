@@ -4,7 +4,27 @@ All tests ran in simulation (Gazebo Classic 11, ROS 2 Humble, Cyclone DDS), head
 
 A run counts as a **success** only if Gazebo shows the cube upright on the drop pedestal afterwards, not merely because the mission printed `MISSION COMPLETE`.
 
-## Repeatability
+## Camera detection with a randomly placed cube
+
+Before each run the cube was put at a random place on the pickup pedestal: up to ±5 cm sideways and up to ±15° turned. The robot had to find it with the camera.
+
+| Run | Cube placement | Camera estimate vs. true position | Result |
+|---|---|---|---|
+| A | 2.2 cm left, +1° | within 1 mm | ✅ |
+| B | 2.8 cm right, −14° | within 3 mm | ✅ |
+| C | 1.9 cm right, −7° | within 2 mm | ✅ |
+| D | 1.6 cm left, +7° | within 2 mm | ✅ |
+| E | 4.4 cm right, +2° | within 1 mm | ✅ |
+
+**Every run where the camera got to look ended with the cube on the drop pedestal.**
+
+Failures on the way there, each stopped safely before the arm moved, then fixed:
+
+- **A leftover test process** published detections in the wrong frame. The "not graspable" check refused to reach 58 cm too far. Fix: the mission only accepts `odom`-frame detections.
+- **The localization check once saw the pedestal only 14 cm wide.** It could not be reproduced with the robot standing still at the same poses (always 23–25 cm), so it was most likely a scan taken while the robot was still slowing down. Fix: wait until odometry shows the robot is still, and re-measure before failing.
+- **The camera once reported 0 detections.** Every image failed to transform to `odom` ("extrapolation into the future"), because the TF listener shared the thread that was waiting for it. Fix: a separate TF thread, plus a fallback to the latest transform. The verification run after the fix logged 0 transform warnings.
+
+## Repeatability (before camera detection)
 
 Five full missions in a row, each in a freshly started simulation:
 
@@ -59,3 +79,5 @@ Each of these caused at least one lost cube or failed run before it was fixed:
 | MoveIt's random planner swung the gripper into the cube | straight-line and checked joint moves near the pedestals |
 | Timeouts in real time cut moves short on a slow simulation | mission uses simulation time |
 | Nav2/AMCL sometimes never activated (Fast DDS) | Cyclone DDS |
+| Localization check fooled by a scan taken while still moving | measure only when odometry says still; re-check before failing |
+| Detector could not transform images (TF thread blocked) | TF listener in its own thread; fall back to the latest transform |

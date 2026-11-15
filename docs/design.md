@@ -13,9 +13,10 @@ How the mission works, why it is built this way, and what had to be changed to m
    - **localization check:** the LiDAR must see a face about 0.25 m wide at about 0.70 m, otherwise the mission stops before the arm moves
    - fit a line to the pedestal face
    - correct any sideways offset (turn 90°, drive, turn back)
+   - **look for the cube** with the camera while still 0.7 m away (see below) and remember its position in the odom frame
    - square up and creep to 0.17 m from the face
 5. **Pick:**
-   - **Estimate the cube position** from the docking measurement (face distance + 3 cm, sideways offset).
+   - **Convert the remembered cube position** into the robot frame. Check it is graspable: on the pedestal, front face at most 2.5 cm behind the edge.
    - **Solve the arm joint angles** with analytic inverse kinematics. Joint 1 turns toward any sideways offset.
    - **Pre-grasp:** open the gripper and move to a point 7 cm in front of the cube. This is an even joint move; the fingertip path is checked in advance to stay 2 cm clear of the cube.
    - **Approach:** slide straight in along a line, with IK solved at 10 waypoints. Stop 8 mm short of the cube center and 5 mm above it, which keeps the wide gripper palm in front of the pedestal edge.
@@ -27,6 +28,21 @@ How the mission works, why it is built this way, and what had to be changed to m
    - retreat in a straight line and back off
 
 The mission uses simulation time, so its timeouts hold when the simulation runs slower than real time.
+
+## Cube detection
+
+`mobile_robot_perception/scripts/cube_detector.py`, with an RGB-D camera added at the TurtleBot3 Waffle Pi camera position (about 10 cm high, facing forward, 640×480, 62° field of view).
+
+- **Where it looks from:** from 0.7 m away the camera sees the cube's front face above the pedestal edge. When docked (0.17 m) the cube is above the camera's view, so the mission looks at the staging pose and remembers the position in the `odom` frame. Odometry drift over the final 0.5 m is negligible.
+- **Pipeline, per frame:**
+  1. HSV threshold for saturated red (two hue bands), plus a morphological opening.
+  2. Largest blob above a minimum size = the cube's visible front face.
+  3. Median depth over the blob = distance to the front face.
+  4. Back-project the blob centroid with the camera intrinsics, then move half a cube further along the viewing direction to get the center.
+  5. Transform to `odom` and publish `/cube_detection/position`, plus `/cube_detection/debug_image` with the detection drawn on it.
+- **Mission:** takes the median of at least 5 detections while standing still and only accepts positions in the `odom` frame.
+- **Accuracy:** with the cube placed randomly (±5 cm sideways, ±15° turned), the estimate was within 1–3 mm of the true position in every run.
+- **Transform timing:** the robot-position transform can lag the camera by a few frames when the simulation is slow. The detector's TF listener runs in its own thread, and if the exact-time transform is not available it uses the latest one. That is exact while the robot stands still, which is the only time the mission uses detections.
 
 ## Why two-stage parking
 
@@ -111,4 +127,5 @@ The saved map (`mobile_robot_navigation/maps/mobile_robot_map.*`) was built with
 | 6 | Pedestals, Regulated Pure Pursuit, LiDAR docking |
 | 7 | Real pick and place: cube-relative IK targets, effort gripper, grasp assist |
 | 8 | Robustness from repeated testing, demo video |
-| next | Simulated camera + cube detection |
+| 9 | Startup localization check, CI build check |
+| 10 | RGB-D camera, cube detection, grasp at the detected position |

@@ -2,7 +2,7 @@
 
 [![build](https://github.com/turtleshelp/mobile-robot-with-arm/actions/workflows/build.yml/badge.svg)](https://github.com/turtleshelp/mobile-robot-with-arm/actions/workflows/build.yml)
 
-An autonomous mobile manipulator in simulation: a **TurtleBot3 Waffle Pi** base with a **ROBOTIS OpenMANIPULATOR-X** arm. It drives to a pedestal, picks up a cube, carries it across the room and places it on a second pedestal.
+An autonomous mobile manipulator in simulation: a **TurtleBot3 Waffle Pi** base with a **ROBOTIS OpenMANIPULATOR-X** arm. It drives to a pedestal, finds the cube on it with its RGB-D camera, picks it up, carries it across the room and places it on a second pedestal.
 
 Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on Ubuntu 22.04, as a case study in the M.Eng. Mechatronics programme at TH Deggendorf.
 
@@ -14,8 +14,9 @@ Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on
 
 - **Navigation:** SLAM-built map, AMCL localization, Nav2 with a Rotation Shim + Regulated Pure Pursuit controller
 - **Precise parking:** a LiDAR docking step squares the robot up to the pedestal to within about 2 cm and 2°
+- **Perception:** an RGB-D camera (at the Waffle Pi camera position) finds the red cube by colour, reads its distance from the depth image and computes its 3D position. Tested with the cube placed randomly on the pedestal (±5 cm sideways, ±15° turned), the camera estimate was within 1–3 mm of the true position.
 - **Manipulation:**
-  - the cube position is estimated from the docking measurement
+  - the grasp targets the cube where the camera saw it
   - analytic inverse kinematics for the 4-DOF arm
   - straight-line approach and lift
   - an effort-controlled gripper
@@ -27,7 +28,7 @@ Built with **ROS 2 Humble**, **Gazebo Classic 11**, **Nav2** and **MoveIt 2** on
 ```mermaid
 flowchart LR
     subgraph sim [Gazebo Classic]
-        robot[Robot<br/>diff drive, LiDAR, arm, gripper]
+        robot[Robot<br/>diff drive, LiDAR, RGB-D camera, arm, gripper]
         world[World<br/>arena, pedestals, cube]
         assist[Grasp assist plugin]
     end
@@ -36,9 +37,12 @@ flowchart LR
     nav[Nav2 + AMCL]
     moveit[MoveIt 2]
     mission[Mission node]
+    detector[Cube detector]
 
     robot -- /scan, /odom --> nav
     nav -- /cmd_vel --> robot
+    robot -- colour + depth images --> detector
+    detector -- cube position --> mission
     control <--> robot
     mission -- navigate_to_pose --> nav
     mission -- LiDAR docking, /cmd_vel --> robot
@@ -52,6 +56,7 @@ flowchart LR
 | `mobile_robot_description` | URDF/xacro, world, Gazebo launch, controller config, grasp assist plugin |
 | `mobile_robot_navigation` | Nav2, AMCL and `slam_toolbox` parameters, saved map |
 | `mobile_robot_moveit_config` | MoveIt 2 configuration |
+| `mobile_robot_perception` | cube detector (colour segmentation + depth, 3D position in the odom frame) |
 | `mobile_robot_bringup` | unified launch and the mission node |
 
 ## Quick start
@@ -120,11 +125,15 @@ ros2 launch mobile_robot_navigation navigation.launch.py
 
 ## Results
 
-**4 of 5** full missions succeeded, each in a freshly started simulation. A run only counts as a success if the cube ends up upright on the drop pedestal.
+Every run starts a fresh simulation, and a run only counts as a success if Gazebo shows the cube upright on the drop pedestal afterwards.
 
-- **Grasps:** none failed; the cube was within about 1 cm of the planned grasp point every time.
+- **With camera detection and a randomly placed cube:** every run in which the camera got to look completed the pick and place, with the camera within 1–3 mm of the true cube position. The failures found along the way were caught by the safety checks before the arm moved, and each was fixed (see [docs/results.md](docs/results.md)).
+- **Grasps:** none failed once the robot reached the cube; the cube was within about 1 cm of the planned grasp point every time.
 - **Parking:** after docking, the robot was within 2 cm and 2° of the target at both pedestals.
-- **The one failure:** a localization error at startup. The grasp check caught it, and the cube was left untouched.
+
+![Cube detection](docs/media/cube_detection.png)
+
+*What the robot's camera sees from 0.7 m: the detected cube (here 5 cm off-centre) with its distance and 3D position.*
 
 A fresh clone of this repository, set up by following only this README, builds and completes the mission. Details: [docs/results.md](docs/results.md).
 
@@ -132,13 +141,13 @@ A fresh clone of this repository, set up by following only this README, builds a
 
 - **Simulation only;** not tested on a physical robot.
 - **Grasp assist:** holding the cube relies on a simulation-only plugin that attaches it to the gripper, but only once the cube is verified between the jaws. Gazebo Classic's physics cannot hold an object with the 1 g ROBOTIS finger links. See [docs/design.md](docs/design.md#grasp-assist-simulation-only).
-- **No perception yet:** the cube position comes from the known pedestal layout plus the LiDAR docking measurement. The camera exists only as TF frames; camera-based detection is the next step.
+- **Simple perception:** the detector looks for one saturated red object, so it assumes the cube is the only red thing in view. The cube's height is taken from the known pedestal; x and y come from the camera. The cube must sit near the front edge of the pedestal (within about 2.5 cm), otherwise the gripper palm would hit the pedestal; the mission checks this and refuses instead.
 - **Localization:** in one early run, AMCL started with a wrong position; the cause could not be reproduced in later runs. AMCL now sets its own start pose, and the mission checks that the pedestal is where the map says before the arm moves, so a localization error stops the mission safely instead of grasping at the wrong place.
 - **Speed:** the simulation runs at about 0.3–0.5× real time on a modest laptop.
 
 ## Documentation
 
-- [docs/design.md](docs/design.md): mission sequence, two-stage parking, arm motion strategy, grasp assist, changes to the ROBOTIS setup, world and interfaces
+- [docs/design.md](docs/design.md): mission sequence, two-stage parking, cube detection, arm motion strategy, grasp assist, changes to the ROBOTIS setup, world and interfaces
 - [docs/results.md](docs/results.md): repeatability, parking accuracy, problems found by testing and their fixes
 
 ## License
