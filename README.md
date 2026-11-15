@@ -137,6 +137,13 @@ Every run starts a fresh simulation, and a run only counts as a success if Gazeb
 
 A fresh clone of this repository, set up by following only this README, builds and completes the mission. Details: [docs/results.md](docs/results.md).
 
+To repeat the tests or re-record the demo yourself (headless, after building):
+
+```bash
+tools/run_trials.sh 5      # 5 missions, cube placed randomly each time; prints a summary
+tools/record_demo.sh       # one recorded mission, cut into an MP4 and a GIF (needs ffmpeg)
+```
+
 ## Limitations
 
 - **Simulation only;** not tested on a physical robot.
