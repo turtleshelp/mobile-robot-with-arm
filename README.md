@@ -69,7 +69,7 @@ flowchart LR
 
 ## Quick start
 
-Requires Ubuntu 22.04 with ROS 2 Humble.
+Requires Ubuntu 22.04 with ROS 2 Humble. On a newer Ubuntu, see [Running with Docker](#running-with-docker).
 
 ```bash
 # 1. Get the workspace and the ROBOTIS arm description (pinned to the tested version)
@@ -140,6 +140,41 @@ ros2 launch mobile_robot_navigation navigation.launch.py
 ```
 
 </details>
+
+### Running with Docker
+
+ROS 2 Humble and Gazebo Classic are not packaged for Ubuntu 24.04 or later. There, run the workspace in an Ubuntu 22.04 container; the Gazebo window still opens on your desktop. Tested on Ubuntu 24.04.
+
+```bash
+# 1. Docker (once per machine; log out and back in afterwards)
+sudo apt install docker.io docker-buildx
+sudo usermod -aG docker $USER
+
+# 2. Get the workspace and the ROBOTIS arm description, as in the quick start
+git clone https://github.com/turtleshelp/mobile-robot-with-arm.git ~/mobile_robot_gripper_ws
+cd ~/mobile_robot_gripper_ws/src
+git clone -b humble https://github.com/ROBOTIS-GIT/turtlebot3_manipulation.git
+git -C turtlebot3_manipulation checkout 814f140
+
+# 3. Build the image (once, about 10-20 min) and the workspace
+cd ~/mobile_robot_gripper_ws
+docker/run.sh image
+docker/run.sh build
+```
+
+Then, in two terminals:
+
+```bash
+# Terminal 1: simulation, localization, Nav2, MoveIt (extra arguments go to the launch, e.g. gui:=false)
+docker/run.sh sim
+
+# Terminal 2: the pick-and-place mission
+docker/run.sh mission
+```
+
+`docker/run.sh shell` opens a shell in the container with the workspace sourced, and `docker/run.sh stop` stops the container and everything in it. The workspace is mounted at `/ws`, so code edits on the host are picked up after `docker/run.sh build`.
+
+**GPU.** With an NVIDIA GPU, install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and run `sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker`; `run.sh` then renders on the NVIDIA GPU, also on laptops where the integrated GPU drives the screen. Without it, rendering runs on the CPU, which works but is noticeably slower. The container's Ubuntu 22.04 graphics drivers do not support recent Intel integrated GPUs (for example Arrow Lake), so these are not used by default; to try one anyway, run `docker/run.sh stop` and then `GPU=intel docker/run.sh sim`. The GPU choice is made when the container starts.
 
 ## Results
 
