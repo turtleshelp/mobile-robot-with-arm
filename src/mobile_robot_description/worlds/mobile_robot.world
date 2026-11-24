@@ -12,7 +12,9 @@
     <physics name="stable_physics" type="ode">
 
       <max_step_size>0.0005</max_step_size>
-      <real_time_update_rate>1000</real_time_update_rate>
+      <!-- 2000 x 0.5 ms = up to 1x real time (was 1000, capped at 0.5x).
+           Same step size, so the physics is unchanged. -->
+      <real_time_update_rate>2000</real_time_update_rate>
 
       <ode>
         <solver>
